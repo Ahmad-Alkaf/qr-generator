@@ -79,10 +79,16 @@ function parseOS(ua: string): string {
 }
 
 function parseBrowser(ua: string): string {
+  if (/SamsungBrowser\//i.test(ua)) return "Samsung Internet";
+  if (/UCBrowser\//i.test(ua) || /UCWEB/i.test(ua)) return "UC Browser";
+  if (/OPR\//i.test(ua) || /Opera/i.test(ua)) return "Opera";
+  if (/Vivaldi\//i.test(ua)) return "Vivaldi";
+  if (/YaBrowser\//i.test(ua)) return "Yandex";
+  if (/Brave/i.test(ua)) return "Brave";
   if (/Edg\//i.test(ua)) return "Edge";
   if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return "Chrome";
-  if (/Firefox\//i.test(ua)) return "Firefox";
+  if (/Firefox\//i.test(ua) || /FxiOS\//i.test(ua)) return "Firefox";
+  if (/CriOS\//i.test(ua)) return "Chrome";
   if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
-  if (/Opera|OPR\//i.test(ua)) return "Opera";
   return "Unknown";
 }
