@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
 import QRCode from "qrcode";
 import sharp from "sharp";
-import { PDFDocument } from "pdf-lib";
+import { PDFDocument, StandardFonts, rgb } from "pdf-lib";
 import { qrGenerateSchema, buildQRData } from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
 import { generateShortCode } from "@/lib/shortcode";
@@ -11,6 +11,18 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 type FrameStyle = "plain" | "rounded" | "scan-me" | "bordered";
 
+const FRAME_PAD = 16;
+
+function parseHex(hex: string) {
+  const h = hex.replace("#", "");
+  return {
+    r: parseInt(h.slice(0, 2), 16) / 255,
+    g: parseInt(h.slice(2, 4), 16) / 255,
+    b: parseInt(h.slice(4, 6), 16) / 255,
+  };
+}
+
+/** SVG frame wrapping — used only for SVG downloads (browsers render <text> fine). */
 function applyFrameToSvg(
   innerSvg: string,
   frameStyle: FrameStyle,
@@ -18,14 +30,18 @@ function applyFrameToSvg(
   bgColor: string,
   qrSize: number,
 ): string {
+  // Extract inner paths and viewBox, use <g transform> instead of nested <svg>
+  const contentMatch = innerSvg.match(/<svg[^>]*>([\s\S]*)<\/svg>/);
+  const innerContent = contentMatch ? contentMatch[1] : "";
+  const vbMatch = innerSvg.match(/viewBox="0\s+0\s+(\d+)\s+(\d+)"/);
+  const vbSize = vbMatch ? Number(vbMatch[1]) : qrSize;
+  const scale = qrSize / vbSize;
+
   function positionQR(x: number, y: number): string {
-    return innerSvg
-      .replace(/<svg\b/, `<svg x="${x}" y="${y}"`)
-      .replace(/width="[^"]*"/, `width="${qrSize}"`)
-      .replace(/height="[^"]*"/, `height="${qrSize}"`);
+    return `<g transform="translate(${x},${y}) scale(${scale})" shape-rendering="crispEdges">${innerContent}</g>`;
   }
 
-  const pad = 16;
+  const pad = FRAME_PAD;
 
   switch (frameStyle) {
     case "rounded": {
@@ -74,6 +90,145 @@ function applyFrameToSvg(
   }
 }
 
+/** Apply frame to a PNG buffer using sharp native ops — no SVG text dependency. */
+async function applyFrameToPng(
+  basePng: Buffer,
+  frameStyle: FrameStyle,
+  fgColor: string,
+  bgColor: string,
+  qrSize: number,
+): Promise<Buffer> {
+  const pad = FRAME_PAD;
+
+  switch (frameStyle) {
+    case "rounded": {
+      const rPad = 20;
+      return sharp(basePng)
+        .extend({ top: rPad, bottom: rPad, left: rPad, right: rPad, background: bgColor })
+        .png()
+        .toBuffer();
+    }
+
+    case "scan-me": {
+      const bannerH = 40;
+      const gap = 12;
+      const bannerSvg = Buffer.from(
+        `<svg xmlns="http://www.w3.org/2000/svg" width="${qrSize}" height="${bannerH}">
+          <rect width="${qrSize}" height="${bannerH}" rx="8" fill="${fgColor}"/>
+          <text x="${qrSize / 2}" y="${bannerH / 2 + 5}" text-anchor="middle" font-family="Arial,Helvetica,sans-serif" font-weight="bold" font-size="14" letter-spacing="3" fill="${bgColor}">SCAN ME</text>
+        </svg>`
+      );
+      // Extend the QR image with padding around it and space for the banner below
+      const extended = await sharp(basePng)
+        .extend({ top: pad, bottom: gap + bannerH + pad, left: pad, right: pad, background: bgColor })
+        .png()
+        .toBuffer();
+      // Composite the banner onto the extended image
+      const bannerY = pad + qrSize + gap;
+      return sharp(extended)
+        .composite([{ input: bannerSvg, top: bannerY, left: pad }])
+        .png()
+        .toBuffer();
+    }
+
+    case "bordered": {
+      const border = 4;
+      // Inner padding with bgColor, then outer border with fgColor
+      const padded = await sharp(basePng)
+        .extend({ top: pad, bottom: pad, left: pad, right: pad, background: bgColor })
+        .png()
+        .toBuffer();
+      return sharp(padded)
+        .extend({ top: border, bottom: border, left: border, right: border, background: fgColor })
+        .png()
+        .toBuffer();
+    }
+
+    case "plain":
+    default:
+      return sharp(basePng)
+        .extend({ top: pad, bottom: pad, left: pad, right: pad, background: bgColor })
+        .png()
+        .toBuffer();
+  }
+}
+
+/** Build a framed PDF using pdf-lib native drawing — reliable text via built-in fonts. */
+async function buildFramedPdf(
+  basePng: Buffer,
+  frameStyle: FrameStyle,
+  fgColor: string,
+  bgColor: string,
+  qrSize: number,
+): Promise<Uint8Array> {
+  const pad = FRAME_PAD;
+  const fg = parseHex(fgColor);
+  const bg = parseHex(bgColor);
+
+  const pdfDoc = await PDFDocument.create();
+  const qrImage = await pdfDoc.embedPng(basePng);
+
+  switch (frameStyle) {
+    case "scan-me": {
+      const bannerH = 40;
+      const gap = 12;
+      const pageW = qrSize + pad * 2;
+      const pageH = qrSize + pad + gap + bannerH + pad;
+      const page = pdfDoc.addPage([pageW, pageH]);
+
+      // Background (PDF y=0 is bottom)
+      page.drawRectangle({ x: 0, y: 0, width: pageW, height: pageH, color: rgb(bg.r, bg.g, bg.b) });
+
+      // QR image — positioned above the banner
+      page.drawImage(qrImage, { x: pad, y: pad + bannerH + gap, width: qrSize, height: qrSize });
+
+      // Banner rectangle
+      page.drawRectangle({ x: pad, y: pad, width: qrSize, height: bannerH, color: rgb(fg.r, fg.g, fg.b) });
+
+      // "SCAN ME" text using built-in Helvetica Bold
+      const font = await pdfDoc.embedFont(StandardFonts.HelveticaBold);
+      const fontSize = 14;
+      const textWidth = font.widthOfTextAtSize("SCAN ME", fontSize);
+      page.drawText("SCAN ME", {
+        x: pageW / 2 - textWidth / 2,
+        y: pad + bannerH / 2 - fontSize * 0.35,
+        size: fontSize,
+        font,
+        color: rgb(bg.r, bg.g, bg.b),
+      });
+      break;
+    }
+
+    case "bordered": {
+      const border = 4;
+      const total = qrSize + (pad + border) * 2;
+      const page = pdfDoc.addPage([total, total]);
+
+      // Outer border
+      page.drawRectangle({ x: 0, y: 0, width: total, height: total, color: rgb(fg.r, fg.g, fg.b) });
+      // Inner background
+      const inner = total - border * 2;
+      page.drawRectangle({ x: border, y: border, width: inner, height: inner, color: rgb(bg.r, bg.g, bg.b) });
+      // QR image
+      page.drawImage(qrImage, { x: pad + border, y: pad + border, width: qrSize, height: qrSize });
+      break;
+    }
+
+    case "rounded":
+    case "plain":
+    default: {
+      const p = frameStyle === "rounded" ? 20 : pad;
+      const total = qrSize + p * 2;
+      const page = pdfDoc.addPage([total, total]);
+      page.drawRectangle({ x: 0, y: 0, width: total, height: total, color: rgb(bg.r, bg.g, bg.b) });
+      page.drawImage(qrImage, { x: p, y: p, width: qrSize, height: qrSize });
+      break;
+    }
+  }
+
+  return pdfDoc.save();
+}
+
 async function buildQRResponse(
   qrData: string,
   format: "png" | "svg" | "pdf",
@@ -82,17 +237,17 @@ async function buildQRResponse(
   extraHeaders?: Record<string, string>,
 ): Promise<NextResponse> {
   const qrSize = Math.min(opts.size, 600);
-  const baseSvg = await QRCode.toString(qrData, {
+  const qrOpts = {
     width: qrSize,
     margin: 2,
     color: { dark: opts.foregroundColor, light: opts.backgroundColor },
     errorCorrectionLevel: opts.errorCorrection,
-    type: "svg",
-  });
+  };
 
-  const framedSvg = applyFrameToSvg(baseSvg, opts.frameStyle, opts.foregroundColor, opts.backgroundColor, qrSize);
-
+  // SVG: use SVG wrapping (browsers render <text> natively)
   if (format === "svg") {
+    const baseSvg = await QRCode.toString(qrData, { ...qrOpts, type: "svg" });
+    const framedSvg = applyFrameToSvg(baseSvg, opts.frameStyle, opts.foregroundColor, opts.backgroundColor, qrSize);
     return new NextResponse(framedSvg, {
       status: 200,
       headers: {
@@ -103,22 +258,11 @@ async function buildQRResponse(
     });
   }
 
-  const pngBuffer = await sharp(Buffer.from(framedSvg)).png().toBuffer();
+  // PNG & PDF: generate base QR as PNG, apply frame natively
+  const basePng = await QRCode.toBuffer(qrData, qrOpts);
 
   if (format === "pdf") {
-    const pdfDoc = await PDFDocument.create();
-    const pngImage = await pdfDoc.embedPng(pngBuffer);
-    const pdfPadding = 40;
-    const pageWidth = pngImage.width + pdfPadding * 2;
-    const pageHeight = pngImage.height + pdfPadding * 2;
-    const page = pdfDoc.addPage([pageWidth, pageHeight]);
-    page.drawImage(pngImage, {
-      x: pdfPadding,
-      y: pdfPadding,
-      width: pngImage.width,
-      height: pngImage.height,
-    });
-    const pdfBytes = await pdfDoc.save();
+    const pdfBytes = await buildFramedPdf(basePng, opts.frameStyle, opts.foregroundColor, opts.backgroundColor, qrSize);
     return new NextResponse(new Uint8Array(pdfBytes), {
       status: 200,
       headers: {
@@ -129,7 +273,9 @@ async function buildQRResponse(
     });
   }
 
-  return new NextResponse(new Uint8Array(pngBuffer), {
+  // PNG: use sharp native operations
+  const framedPng = await applyFrameToPng(basePng, opts.frameStyle, opts.foregroundColor, opts.backgroundColor, qrSize);
+  return new NextResponse(new Uint8Array(framedPng), {
     status: 200,
     headers: {
       "Content-Type": "image/png",

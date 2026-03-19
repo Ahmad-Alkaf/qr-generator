@@ -1,14 +1,23 @@
 import type { Metadata } from "next";
+import { redirect } from "next/navigation";
+import { currentUser } from "@clerk/nextjs/server";
 import { Mail, MessageSquare } from "lucide-react";
+import { ContactForm } from "@/components/contact/contact-form";
 
 export const metadata: Metadata = {
   title: "Contact Us",
   description:
-    "Get in touch with the QRForge team. We're here to help with questions about QR code generation, pricing, and support.",
+    "Get in touch with the QRForge team. We're here to help with questions about QR code generation and support.",
   alternates: { canonical: "/contact" },
 };
 
-export default function ContactPage() {
+export default async function ContactPage() {
+  const user = await currentUser();
+
+  if (!user) {
+    redirect("/sign-in?redirect_url=/contact");
+  }
+
   return (
     <div className="py-20">
       <div className="mx-auto max-w-2xl px-4 sm:px-6 lg:px-8">
@@ -46,76 +55,10 @@ export default function ContactPage() {
           </div>
         </div>
 
-        <form className="mt-12 space-y-6">
-          <div className="grid gap-6 sm:grid-cols-2">
-            <div>
-              <label
-                htmlFor="name"
-                className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Name
-              </label>
-              <input
-                id="name"
-                type="text"
-                required
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                placeholder="Your name"
-              />
-            </div>
-            <div>
-              <label
-                htmlFor="email"
-                className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-              >
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                required
-                className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-                placeholder="you@example.com"
-              />
-            </div>
-          </div>
-          <div>
-            <label
-              htmlFor="subject"
-              className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Subject
-            </label>
-            <input
-              id="subject"
-              type="text"
-              required
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              placeholder="How can we help?"
-            />
-          </div>
-          <div>
-            <label
-              htmlFor="message"
-              className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
-            >
-              Message
-            </label>
-            <textarea
-              id="message"
-              rows={5}
-              required
-              className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-              placeholder="Tell us more..."
-            />
-          </div>
-          <button
-            type="submit"
-            className="w-full rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
-          >
-            Send Message
-          </button>
-        </form>
+        <ContactForm
+          defaultName={user?.fullName ?? undefined}
+          defaultEmail={user?.emailAddresses[0]?.emailAddress}
+        />
       </div>
     </div>
   );
