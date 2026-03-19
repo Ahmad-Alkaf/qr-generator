@@ -24,7 +24,6 @@ export const qrGenerateSchema = z.object({
   // Tracked: QR points to redirect URL (enables analytics + editable destination)
   isDirect: z.boolean().default(true),
   format: z.enum(["png", "svg", "pdf"]).default("png"),
-  frameStyle: z.enum(["plain", "rounded", "scan-me", "bordered"]).default("plain"),
 });
 
 export type QRGenerateInput = z.infer<typeof qrGenerateSchema>;

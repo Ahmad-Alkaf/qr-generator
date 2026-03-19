@@ -11,8 +11,6 @@ import {
   FileCode2,
   FileText,
   Square,
-  ScanLine,
-  Frame,
   Link as LinkIcon,
   Wifi,
   Contact,
@@ -20,10 +18,20 @@ import {
   MessageSquare,
   MessageCircle,
   Type,
+  Circle,
+  RectangleHorizontal,
+  Diamond,
+  Sparkles,
+  Gem,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import NextLink from "next/link";
-import { QRPreview, type QRFrameStyle } from "./qr-preview";
+import {
+  QRPreview,
+  type QRDotType,
+  type QRCornerSquareType,
+  type QRCornerDotType,
+} from "./qr-preview";
 import { QRTypeFields } from "./qr-type-fields";
 import { buildQRData, type QRTypeValue } from "@/lib/qr";
 import { cn } from "@/lib/utils";
@@ -44,15 +52,56 @@ const QR_TYPE_OPTIONS: { value: QRTypeValue; label: string; icon: React.Componen
   { value: "PLAIN_TEXT", label: "Text", icon: Type },
 ];
 
-// Types that encode HTTP URLs and can be tracked via 301 redirect
 const TRACKABLE_TYPES = new Set<QRTypeValue>(["URL", "PDF", "WHATSAPP"]);
 
-const FRAME_STYLES: { value: QRFrameStyle; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
-  { value: "plain", label: "Classic", icon: Square },
-  { value: "rounded", label: "Rounded", icon: () => <div className="h-4 w-4 rounded-md border-2 border-current" /> },
-  { value: "scan-me", label: "Scan Me", icon: ScanLine },
-  { value: "bordered", label: "Framed", icon: Frame },
+const DOT_STYLES: { value: QRDotType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "square", label: "Square", icon: Square },
+  { value: "dots", label: "Dots", icon: Circle },
+  { value: "rounded", label: "Rounded", icon: RectangleHorizontal },
+  { value: "extra-rounded", label: "Smooth", icon: Gem },
+  { value: "classy", label: "Classy", icon: Diamond },
+  { value: "classy-rounded", label: "Elegant", icon: Sparkles },
 ];
+
+const CORNER_SQUARE_STYLES: { value: QRCornerSquareType; label: string }[] = [
+  { value: "square", label: "Square" },
+  { value: "dot", label: "Dot" },
+  { value: "extra-rounded", label: "Rounded" },
+];
+
+const CORNER_DOT_STYLES: { value: QRCornerDotType; label: string }[] = [
+  { value: "square", label: "Square" },
+  { value: "dot", label: "Dot" },
+];
+
+/* ── Client-side helpers for download ── */
+
+async function createPdfFromPng(pngBlob: Blob): Promise<Blob> {
+  const { PDFDocument } = await import("pdf-lib");
+  const pdfDoc = await PDFDocument.create();
+  const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
+  const pngImage = await pdfDoc.embedPng(pngBytes);
+  const padding = 40;
+  const pageW = pngImage.width + padding * 2;
+  const pageH = pngImage.height + padding * 2;
+  const page = pdfDoc.addPage([pageW, pageH]);
+  page.drawImage(pngImage, { x: padding, y: padding, width: pngImage.width, height: pngImage.height });
+  const pdfBytes = await pdfDoc.save();
+  return new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
+}
+
+function downloadBlob(blob: Blob, filename: string) {
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+/* ── Component ── */
 
 export function QRGenerator({ defaultType = "URL", compact = false }: QRGeneratorProps) {
   const { isSignedIn } = useUser();
@@ -60,66 +109,98 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
   const [type, setType] = useState<QRTypeValue>(defaultType);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
+  const [transparentBg, setTransparentBg] = useState(false);
   const [isDirect, setIsDirect] = useState(false);
   const [downloadingFormat, setDownloadingFormat] = useState<"png" | "svg" | "pdf" | null>(null);
   const [errorCorrection, setErrorCorrection] = useState<"L" | "M" | "Q" | "H">("M");
-  const [frameStyle, setFrameStyle] = useState<QRFrameStyle>("plain");
-  const directData = content ? buildQRData(type, content) : "";
-  // For the live preview: Direct shows actual content, Tracked shows a placeholder redirect URL
-  const qrData = isDirect
-    ? directData
-    : content
-      ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/preview`
-      : "";
+  const [dotType, setDotType] = useState<QRDotType>("square");
+  const [cornerSquareType, setCornerSquareType] = useState<QRCornerSquareType>("square");
+  const [cornerDotType, setCornerDotType] = useState<QRCornerDotType>("square");
+
+  const effectiveBgColor = transparentBg ? "transparent" : bgColor;
+
+  // Preview always shows the actual content so users can verify their input.
+  // The tracked redirect URL is generated server-side only at download time.
+  const qrData = content ? buildQRData(type, content) : "";
 
   const handleDownload = useCallback(async (format: "png" | "svg" | "pdf") => {
     if (!content || downloadingFormat) return;
-
-    // Block tracked QR for unauthenticated users
-    if (!isDirect && !isSignedIn) {
-      return;
-    }
+    if (!isDirect && !isSignedIn) return;
 
     setDownloadingFormat(format);
 
     try {
-      const res = await fetch("/api/qr/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          type,
-          content,
-          foregroundColor: fgColor,
-          backgroundColor: bgColor,
-          size: 600,
-          errorCorrection,
-          isDirect,
-          format,
-          frameStyle,
-        }),
+      let qrDataToEncode: string;
+
+      if (isDirect) {
+        qrDataToEncode = buildQRData(type, content);
+        // Fire-and-forget save to user account
+        if (isSignedIn) {
+          fetch("/api/qr/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: bgColor, size: 600, errorCorrection, isDirect: true }),
+          }).catch(() => {});
+        }
+      } else {
+        // Tracked: call API to create entry and get redirect URL
+        const res = await fetch("/api/qr/generate", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: bgColor, size: 600, errorCorrection, isDirect: false }),
+        });
+        if (!res.ok) {
+          const err = await res.json();
+          alert(err.error || "Failed to create tracked QR code");
+          return;
+        }
+        const data = await res.json();
+        qrDataToEncode = data.qrData;
+      }
+
+      // Generate QR image client-side
+      const { default: QRCodeStyling } = await import("qr-code-styling");
+      const qrSize = 600;
+
+      const qr = new QRCodeStyling({
+        width: qrSize,
+        height: qrSize,
+        type: format === "svg" ? "svg" : "canvas",
+        data: qrDataToEncode,
+        margin: 8,
+        dotsOptions: { color: fgColor, type: dotType },
+        cornersSquareOptions: { color: fgColor, type: cornerSquareType },
+        cornersDotOptions: { color: fgColor, type: cornerDotType },
+        backgroundOptions: { color: effectiveBgColor },
+        qrOptions: { errorCorrectionLevel: errorCorrection },
       });
 
-      if (!res.ok) {
-        const err = await res.json();
-        alert(err.error || "Failed to generate QR code");
+      const filename = `qrforge-${type.toLowerCase()}`;
+
+      if (format === "svg") {
+        const blob = await qr.getRawData("svg");
+        if (!blob) throw new Error("Failed to generate SVG");
+        downloadBlob(blob as Blob, `${filename}.svg`);
         return;
       }
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = `qrforge-${type.toLowerCase()}.${format}`;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
+      // PNG or PDF
+      const rawBlob = await qr.getRawData("png");
+      if (!rawBlob) throw new Error("Failed to generate PNG");
+
+      if (format === "pdf") {
+        const pdfBlob = await createPdfFromPng(rawBlob as Blob);
+        downloadBlob(pdfBlob, `${filename}.pdf`);
+        return;
+      }
+
+      downloadBlob(rawBlob as Blob, `${filename}.png`);
     } catch {
       alert("Failed to generate QR code. Please try again.");
     } finally {
       setDownloadingFormat(null);
     }
-  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn, downloadingFormat, frameStyle]);
+  }, [type, content, fgColor, effectiveBgColor, errorCorrection, isDirect, isSignedIn, downloadingFormat, dotType, cornerSquareType, cornerDotType]);
 
   const handleContentChange = useCallback((value: string) => {
     setContent(value);
@@ -174,7 +255,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           {/* Type-specific fields */}
           <QRTypeFields key={type} type={type} onChange={handleContentChange} />
 
-          {/* QR Mode: Direct vs Tracked (only for types that support HTTP redirect tracking) */}
+          {/* QR Mode */}
           {TRACKABLE_TYPES.has(type) && (
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
@@ -233,28 +314,76 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           </div>
           )}
 
-          {/* QR Style */}
+          {/* Dot Style */}
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
-              Style
+              Dot Style
             </label>
-            <div className="grid grid-cols-4 gap-2">
-              {FRAME_STYLES.map(({ value, label, icon: Icon }) => (
+            <div className="grid grid-cols-6 gap-1.5">
+              {DOT_STYLES.map(({ value, label, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
-                  onClick={() => setFrameStyle(value)}
+                  onClick={() => setDotType(value)}
                   className={cn(
-                    "flex flex-col items-center gap-1.5 rounded-xl border-2 px-3 py-2.5 text-xs font-medium transition-all",
-                    frameStyle === value
+                    "flex flex-col items-center gap-1 rounded-xl border-2 px-2 py-2 text-[10px] font-medium transition-all",
+                    dotType === value
                       ? "border-primary bg-primary-50 text-primary dark:bg-primary/10"
                       : "border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400"
                   )}
                 >
-                  <Icon className="h-4 w-4" />
+                  <Icon className="h-3.5 w-3.5" />
                   {label}
                 </button>
               ))}
+            </div>
+          </div>
+
+          {/* Corner Style */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Corner Square
+              </label>
+              <div className="flex gap-1.5">
+                {CORNER_SQUARE_STYLES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setCornerSquareType(value)}
+                    className={cn(
+                      "flex-1 rounded-lg border-2 px-2 py-1.5 text-[10px] font-medium transition-all",
+                      cornerSquareType === value
+                        ? "border-primary bg-primary-50 text-primary dark:bg-primary/10"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div>
+              <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+                Corner Dot
+              </label>
+              <div className="flex gap-1.5">
+                {CORNER_DOT_STYLES.map(({ value, label }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setCornerDotType(value)}
+                    className={cn(
+                      "flex-1 rounded-lg border-2 px-2 py-1.5 text-[10px] font-medium transition-all",
+                      cornerDotType === value
+                        ? "border-primary bg-primary-50 text-primary dark:bg-primary/10"
+                        : "border-gray-200 text-gray-500 hover:border-gray-300 dark:border-gray-700 dark:text-gray-400"
+                    )}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
@@ -286,22 +415,36 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
             <div>
               <label
                 htmlFor="bg-color"
-                className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300"
+                className="mb-1.5 flex items-center justify-between text-sm font-medium text-gray-700 dark:text-gray-300"
               >
                 Background
+                <button
+                  type="button"
+                  onClick={() => setTransparentBg(!transparentBg)}
+                  className={cn(
+                    "rounded-md px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide transition-all",
+                    transparentBg
+                      ? "bg-primary text-white"
+                      : "bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  )}
+                >
+                  Transparent
+                </button>
               </label>
-              <div className="flex items-center gap-2">
+              <div className={cn("flex items-center gap-2", transparentBg && "pointer-events-none opacity-40")}>
                 <input
                   id="bg-color"
                   type="color"
                   value={bgColor}
                   onChange={(e) => setBgColor(e.target.value)}
+                  disabled={transparentBg}
                   className="h-10 w-10 cursor-pointer rounded-lg border border-gray-300 dark:border-gray-700"
                 />
                 <input
                   type="text"
-                  value={bgColor}
+                  value={transparentBg ? "transparent" : bgColor}
                   onChange={(e) => setBgColor(e.target.value)}
+                  disabled={transparentBg}
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase dark:border-gray-700 dark:bg-gray-800 dark:text-white"
                 />
               </div>
@@ -442,13 +585,14 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
             value={qrData}
             size={compact ? 200 : 280}
             fgColor={fgColor}
-            bgColor={bgColor}
+            bgColor={effectiveBgColor}
             level={errorCorrection}
-            frameStyle={frameStyle}
+            dotType={dotType}
+            cornerSquareType={cornerSquareType}
+            cornerDotType={cornerDotType}
           />
         </div>
       </div>
-
     </>
   );
 }

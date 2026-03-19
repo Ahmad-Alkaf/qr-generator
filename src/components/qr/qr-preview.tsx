@@ -1,9 +1,10 @@
 "use client";
 
-import { QRCodeSVG } from "qrcode.react";
-import { cn } from "@/lib/utils";
+import { useEffect, useRef, useState } from "react";
 
-export type QRFrameStyle = "plain" | "rounded" | "scan-me" | "bordered";
+export type QRDotType = "square" | "dots" | "rounded" | "extra-rounded" | "classy" | "classy-rounded";
+export type QRCornerSquareType = "square" | "dot" | "extra-rounded";
+export type QRCornerDotType = "square" | "dot";
 
 interface QRPreviewProps {
   value: string;
@@ -11,7 +12,9 @@ interface QRPreviewProps {
   fgColor?: string;
   bgColor?: string;
   level?: "L" | "M" | "Q" | "H";
-  frameStyle?: QRFrameStyle;
+  dotType?: QRDotType;
+  cornerSquareType?: QRCornerSquareType;
+  cornerDotType?: QRCornerDotType;
 }
 
 export function QRPreview({
@@ -20,8 +23,41 @@ export function QRPreview({
   fgColor = "#000000",
   bgColor = "#FFFFFF",
   level = "M",
-  frameStyle = "plain",
+  dotType = "square",
+  cornerSquareType = "square",
+  cornerDotType = "square",
 }: QRPreviewProps) {
+  const containerRef = useRef<HTMLDivElement>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [QRStyling, setQRStyling] = useState<any>(null);
+
+  useEffect(() => {
+    import("qr-code-styling").then((mod) => setQRStyling(() => mod.default));
+  }, []);
+
+  useEffect(() => {
+    if (!QRStyling || !containerRef.current || !value) {
+      if (containerRef.current) containerRef.current.innerHTML = "";
+      return;
+    }
+
+    const qr = new QRStyling({
+      width: size,
+      height: size,
+      type: "svg",
+      data: value,
+      margin: 4,
+      dotsOptions: { color: fgColor, type: dotType },
+      cornersSquareOptions: { color: fgColor, type: cornerSquareType },
+      cornersDotOptions: { color: fgColor, type: cornerDotType },
+      backgroundOptions: { color: "transparent" },
+      qrOptions: { errorCorrectionLevel: level },
+    });
+
+    containerRef.current.innerHTML = "";
+    qr.append(containerRef.current);
+  }, [QRStyling, value, size, fgColor, bgColor, level, dotType, cornerSquareType, cornerDotType]);
+
   if (!value) {
     return (
       <div
@@ -35,60 +71,12 @@ export function QRPreview({
     );
   }
 
-  const qr = (
-    <QRCodeSVG
-      value={value}
-      size={size}
-      fgColor={fgColor}
-      bgColor={bgColor}
-      level={level}
-      includeMargin={false}
-    />
+  return (
+    <div
+      className="inline-flex rounded-2xl p-4 shadow-lg"
+      style={{ backgroundColor: bgColor === "transparent" ? "#FFFFFF" : bgColor }}
+    >
+      <div ref={containerRef} style={{ width: size, height: size }} />
+    </div>
   );
-
-  switch (frameStyle) {
-    case "rounded":
-      return (
-        <div
-          className="inline-flex overflow-hidden rounded-3xl bg-white p-5 shadow-xl"
-          style={{ backgroundColor: bgColor }}
-        >
-          <div className="overflow-hidden rounded-2xl">{qr}</div>
-        </div>
-      );
-
-    case "scan-me":
-      return (
-        <div className="inline-flex flex-col items-center rounded-2xl bg-white p-4 pb-3 shadow-lg">
-          {qr}
-          <div
-            className="mt-3 w-full rounded-lg px-4 py-1.5 text-center text-sm font-bold tracking-widest uppercase"
-            style={{ backgroundColor: fgColor, color: bgColor }}
-          >
-            Scan Me
-          </div>
-        </div>
-      );
-
-    case "bordered":
-      return (
-        <div
-          className={cn("inline-flex rounded-2xl border-4 p-4 shadow-lg")}
-          style={{
-            borderColor: fgColor,
-            backgroundColor: bgColor,
-          }}
-        >
-          {qr}
-        </div>
-      );
-
-    case "plain":
-    default:
-      return (
-        <div className="inline-flex rounded-2xl bg-white p-4 shadow-lg">
-          {qr}
-        </div>
-      );
-  }
 }
