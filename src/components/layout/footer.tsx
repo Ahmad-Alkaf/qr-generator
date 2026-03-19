@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { QrCode } from "lucide-react";
+import Image from "next/image";
 
 const footerLinks = {
   Product: [
@@ -27,12 +27,13 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary text-white">
-                <QrCode className="h-5 w-5" />
+            <Link href="/" className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
+                <Image src="/logo/symbol.svg" alt="QRForge" width={22} height={22} />
               </div>
-              <span className="font-heading text-lg font-bold text-gray-900 dark:text-white">
-                QRForge
+              <span className="font-heading text-lg font-bold tracking-tight">
+                <span className="text-primary">QR</span>
+                <span className="text-gray-900 dark:text-white">Forge</span>
               </span>
             </Link>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
