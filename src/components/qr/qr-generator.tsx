@@ -139,7 +139,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           fetch("/api/qr/generate", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: bgColor, size: 600, errorCorrection, isDirect: true }),
+            body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: effectiveBgColor, size: 600, errorCorrection, isDirect: true }),
           }).catch(() => {});
         }
       } else {
@@ -147,7 +147,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
         const res = await fetch("/api/qr/generate", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: bgColor, size: 600, errorCorrection, isDirect: false }),
+          body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: effectiveBgColor, size: 600, errorCorrection, isDirect: false }),
         });
         if (!res.ok) {
           const err = await res.json();

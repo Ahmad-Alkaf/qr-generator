@@ -17,7 +17,7 @@ export const qrGenerateSchema = z.object({
   type: z.enum(QR_TYPES),
   content: z.string().min(1, "Content is required").max(4000),
   foregroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default("#000000"),
-  backgroundColor: z.string().regex(/^#[0-9A-Fa-f]{6}$/).default("#FFFFFF"),
+  backgroundColor: z.union([z.string().regex(/^#[0-9A-Fa-f]{6}$/), z.literal("transparent")]).default("#FFFFFF"),
   size: z.number().min(100).max(2000).default(300),
   errorCorrection: z.enum(["L", "M", "Q", "H"]).default("M"),
   // Direct: content encoded directly in QR (fast, no analytics)
