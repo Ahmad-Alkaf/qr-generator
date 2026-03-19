@@ -93,6 +93,10 @@ const faqs = [
     q: "How do scan analytics work?",
     a: "When someone scans a Tracked QR code, they are briefly redirected through our server, which records the scan event including country, city, device type, browser, and timestamp. Direct QR codes do not have analytics since they don't redirect.",
   },
+  {
+    q: "What does Error Correction do?",
+    a: "QR codes have built-in error correction that lets them scan even when partially damaged or obscured. Low (7%), Medium (15%), Quartile (25%), and High (30%) indicate how much of the code can be lost and still work. Higher levels make the QR denser but more resilient — use High if you plan to add a logo overlay. Note: for short content, lower levels may look identical because the QR encoder automatically upgrades the error correction when there is spare capacity in the grid.",
+  },
 ];
 
 export default function HomePage() {
