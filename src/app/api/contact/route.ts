@@ -24,11 +24,11 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Invalid request body" }, { status: 400 });
   }
 
-  const { name, email, subject, message } = body as Record<string, string>;
+  const { subject, message } = body as Record<string, string>;
 
-  if (!name || !email || !subject || !message) {
+  if (!subject || !message) {
     return NextResponse.json(
-      { error: "All fields are required" },
+      { error: "Subject and message are required" },
       { status: 400 }
     );
   }
@@ -37,8 +37,8 @@ export async function POST(req: Request) {
     await prisma.contactMessage.create({
       data: {
         userId: user.id,
-        name,
-        email,
+        name: user.name || "Unknown",
+        email: user.email,
         subject,
         message,
       },

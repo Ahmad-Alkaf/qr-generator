@@ -21,8 +21,6 @@ export function ContactForm({
 
     const form = e.currentTarget;
     const data = {
-      name: (form.elements.namedItem("name") as HTMLInputElement).value,
-      email: (form.elements.namedItem("email") as HTMLInputElement).value,
       subject: (form.elements.namedItem("subject") as HTMLInputElement).value,
       message: (form.elements.namedItem("message") as HTMLTextAreaElement)
         .value,
@@ -71,10 +69,9 @@ export function ContactForm({
             id="name"
             name="name"
             type="text"
-            required
-            defaultValue={defaultName}
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            placeholder="Your name"
+            readOnly
+            value={defaultName}
+            className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400"
           />
         </div>
         <div>
@@ -88,10 +85,9 @@ export function ContactForm({
             id="email"
             name="email"
             type="email"
-            required
-            defaultValue={defaultEmail}
-            className="w-full rounded-xl border border-gray-300 bg-white px-4 py-3 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
-            placeholder="you@example.com"
+            readOnly
+            value={defaultEmail}
+            className="w-full rounded-xl border border-gray-300 bg-gray-50 px-4 py-3 text-sm text-gray-500 shadow-sm dark:border-gray-700 dark:bg-gray-800/50 dark:text-gray-400"
           />
         </div>
       </div>
