@@ -2,7 +2,16 @@
   "permissions": {
     "allow": [
       "Bash(npx next build:*)",
-      "Bash(npx prisma generate:*)"
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma migrate:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npm ls:*)",
+      "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" status:*)",
+      "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" diff:*)",
+      "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" log:*)",
+      "Bash(git -C C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator diff src/app/api/qr/generate/route.ts src/components/layout/header.tsx src/lib/auth.ts)",
+      "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" status --short)",
+      "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" add .claude/settings.local.json .gitignore .todo package-lock.json package.json prisma/schema.prisma src/app/api/qr/generate/route.ts src/app/layout.tsx src/app/pricing/page.tsx src/components/layout/header.tsx src/components/qr/qr-generator.tsx src/app/api/qr/ src/app/api/webhooks/ src/app/dashboard/ src/app/privacy/ src/app/sign-in/ src/app/sign-up/ src/app/terms/ src/lib/auth.ts src/proxy.ts)"
     ]
   }
 }

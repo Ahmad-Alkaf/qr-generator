@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { auth } from "@clerk/nextjs/server";
 import QRCode from "qrcode";
 import { qrGenerateSchema, buildQRData } from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
@@ -28,19 +29,47 @@ export async function POST(req: Request) {
       isDirect,
     } = parsed.data;
 
-    // Build the actual content data string
-    const destinationData = buildQRData(type, content);
+    // Tracked QR codes require authentication
+    if (!isDirect) {
+      const { userId } = await auth();
+      if (!userId) {
+        return NextResponse.json(
+          { error: "Sign in required to create Tracked QR codes" },
+          { status: 401 }
+        );
+      }
 
-    let qrEncodeData: string;
+      // Get or create user in our DB
+      let user = await prisma.user.findUnique({ where: { clerkId: userId } });
+      if (!user) {
+        // User exists in Clerk but not our DB yet (webhook may not have fired)
+        user = await prisma.user.create({
+          data: { clerkId: userId, email: `pending-${userId}@placeholder.local` },
+        });
+      }
 
-    if (isDirect) {
-      // Direct mode: encode the content directly in the QR code
-      qrEncodeData = destinationData;
-    } else {
-      // Tracked mode: save to DB with a shortCode, encode the redirect URL
+      // Enforce plan limits for tracked QR codes
+      const trackedCount = await prisma.qRCode.count({
+        where: { userId: user.id, isDirect: false },
+      });
+
+      if (user.plan === "FREE" && trackedCount >= 10) {
+        return NextResponse.json(
+          { error: "Free plan limit reached (10 tracked QR codes). Upgrade to Pro for unlimited." },
+          { status: 403 }
+        );
+      }
+
+      if (user.plan === "PRO" && trackedCount >= 50) {
+        return NextResponse.json(
+          { error: "Pro plan limit reached (50 tracked QR codes). Upgrade to Business for unlimited." },
+          { status: 403 }
+        );
+      }
+
+      // Build data & generate shortCode
+      const destinationData = buildQRData(type, content);
       let shortCode = generateShortCode();
-
-      // Ensure uniqueness
       let exists = await prisma.qRCode.findUnique({ where: { shortCode } });
       while (exists) {
         shortCode = generateShortCode();
@@ -49,6 +78,7 @@ export async function POST(req: Request) {
 
       await prisma.qRCode.create({
         data: {
+          userId: user.id,
           type,
           content,
           foregroundColor,
@@ -62,33 +92,61 @@ export async function POST(req: Request) {
         },
       });
 
-      qrEncodeData = `${SITE_URL}/r/${shortCode}`;
+      const qrEncodeData = `${SITE_URL}/r/${shortCode}`;
+
+      const qrBuffer = await QRCode.toBuffer(qrEncodeData, {
+        width: Math.min(size, 600),
+        margin: 2,
+        color: { dark: foregroundColor, light: backgroundColor },
+        errorCorrectionLevel: errorCorrection,
+      });
+
+      return new NextResponse(new Uint8Array(qrBuffer), {
+        status: 200,
+        headers: {
+          "Content-Type": "image/png",
+          "Content-Disposition": `attachment; filename="qrforge-${type.toLowerCase()}.png"`,
+        },
+      });
     }
 
-    // Generate QR as PNG buffer
-    const qrBuffer = await QRCode.toBuffer(qrEncodeData, {
+    // Direct mode — no auth required
+    const data = buildQRData(type, content);
+
+    const qrBuffer = await QRCode.toBuffer(data, {
       width: Math.min(size, 600),
       margin: 2,
-      color: {
-        dark: foregroundColor,
-        light: backgroundColor,
-      },
+      color: { dark: foregroundColor, light: backgroundColor },
       errorCorrectionLevel: errorCorrection,
     });
 
-    const headers: Record<string, string> = {
-      "Content-Type": "image/png",
-      "Content-Disposition": `attachment; filename="qrforge-${type.toLowerCase()}.png"`,
-    };
-
-    // Only cache direct QR codes (tracked ones are unique per request)
-    if (isDirect) {
-      headers["Cache-Control"] = "public, max-age=31536000, immutable";
+    // If user is authenticated, save the direct QR to their account too
+    const { userId } = await auth();
+    if (userId) {
+      const user = await prisma.user.findUnique({ where: { clerkId: userId } });
+      if (user) {
+        await prisma.qRCode.create({
+          data: {
+            userId: user.id,
+            type,
+            content,
+            foregroundColor,
+            backgroundColor,
+            errorCorrection,
+            size,
+            isDirect: true,
+          },
+        });
+      }
     }
 
     return new NextResponse(new Uint8Array(qrBuffer), {
       status: 200,
-      headers,
+      headers: {
+        "Content-Type": "image/png",
+        "Content-Disposition": `attachment; filename="qrforge-${type.toLowerCase()}.png"`,
+        "Cache-Control": "public, max-age=31536000, immutable",
+      },
     });
   } catch (error) {
     console.error("QR generation error:", error);

@@ -1,7 +1,9 @@
 "use client";
 
 import { useState, useCallback } from "react";
-import { Download, Link as LinkIcon, Loader2, Zap, BarChart3 } from "lucide-react";
+import { Download, Link as LinkIcon, Loader2, Zap, BarChart3, LogIn } from "lucide-react";
+import { useUser } from "@clerk/nextjs";
+import NextLink from "next/link";
 import { QRPreview } from "./qr-preview";
 import { buildQRData, type QRTypeValue } from "@/lib/qr";
 import { cn } from "@/lib/utils";
@@ -12,6 +14,7 @@ interface QRGeneratorProps {
 }
 
 export function QRGenerator({ defaultType = "URL", compact = false }: QRGeneratorProps) {
+  const { isSignedIn } = useUser();
   const [content, setContent] = useState("");
   const [type] = useState<QRTypeValue>(defaultType);
   const [fgColor, setFgColor] = useState("#000000");
@@ -25,11 +28,17 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
   const qrData = isDirect
     ? directData
     : content
-      ? `${window.location.origin}/r/preview`
+      ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/preview`
       : "";
 
   const handleDownload = useCallback(async () => {
     if (!content) return;
+
+    // Block tracked QR for unauthenticated users
+    if (!isDirect && !isSignedIn) {
+      return;
+    }
+
     setDownloading(true);
 
     try {
@@ -67,9 +76,11 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
     } finally {
       setDownloading(false);
     }
-  }, [type, content, fgColor, bgColor, errorCorrection, isDirect]);
+  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn]);
 
   const placeholder = type === "URL" ? "https://example.com" : "Enter your content...";
+
+  const showSignInPrompt = !isDirect && !isSignedIn;
 
   return (
     <div
@@ -141,10 +152,21 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
               </div>
             </button>
           </div>
-          {!isDirect && (
+          {!isDirect && isSignedIn && (
             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
               Tracked QR codes redirect through our server, enabling scan analytics and editable destinations.
             </p>
+          )}
+          {showSignInPrompt && (
+            <div className="mt-3 flex items-center gap-2 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-900/20 dark:text-amber-300">
+              <LogIn className="h-4 w-4 shrink-0" />
+              <span>
+                <NextLink href="/sign-in" className="font-semibold underline hover:no-underline">
+                  Sign in
+                </NextLink>{" "}
+                to create Tracked QR codes with analytics.
+              </span>
+            </div>
           )}
         </div>
 
@@ -221,23 +243,33 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           </select>
         </div>
 
-        {/* Download button */}
-        <button
-          onClick={handleDownload}
-          disabled={!content || downloading}
-          className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {downloading ? (
-            <Loader2 className="h-4 w-4 animate-spin" />
-          ) : (
-            <Download className="h-4 w-4" />
-          )}
-          {downloading
-            ? isDirect
-              ? "Generating..."
-              : "Creating tracked QR..."
-            : "Download PNG"}
-        </button>
+        {/* Download button or sign-in prompt */}
+        {showSignInPrompt ? (
+          <NextLink
+            href="/sign-in"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+          >
+            <LogIn className="h-4 w-4" />
+            Sign in to Create Tracked QR Code
+          </NextLink>
+        ) : (
+          <button
+            onClick={handleDownload}
+            disabled={!content || downloading}
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {downloading ? (
+              <Loader2 className="h-4 w-4 animate-spin" />
+            ) : (
+              <Download className="h-4 w-4" />
+            )}
+            {downloading
+              ? isDirect
+                ? "Generating..."
+                : "Creating tracked QR..."
+              : "Download PNG"}
+          </button>
+        )}
       </div>
 
       {/* Right: Preview */}

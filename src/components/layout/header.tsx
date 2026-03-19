@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import { Menu, X, QrCode } from "lucide-react";
+import { Show, UserButton, SignInButton } from "@clerk/nextjs";
 import { cn } from "@/lib/utils";
 
 const navLinks = [
@@ -41,20 +42,36 @@ export function Header() {
           ))}
         </nav>
 
-        {/* CTA */}
+        {/* CTA / Auth */}
         <div className="hidden items-center gap-3 md:flex">
-          <Link
-            href="/login"
-            className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-          >
-            Log in
-          </Link>
-          <Link
-            href="/#generator"
-            className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
-          >
-            Create QR Code
-          </Link>
+          <Show when="signed-out">
+            <SignInButton>
+              <button className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white">
+                Log in
+              </button>
+            </SignInButton>
+            <Link
+              href="/#generator"
+              className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+            >
+              Create QR Code
+            </Link>
+          </Show>
+          <Show when="signed-in">
+            <Link
+              href="/dashboard"
+              className="rounded-lg px-4 py-2 text-sm font-medium text-gray-600 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+            >
+              Dashboard
+            </Link>
+            <UserButton
+              appearance={{
+                elements: {
+                  avatarBox: "h-9 w-9",
+                },
+              }}
+            />
+          </Show>
         </div>
 
         {/* Mobile menu button */}
@@ -85,22 +102,34 @@ export function Header() {
               {link.label}
             </Link>
           ))}
-          <div className="flex gap-2 pt-2">
+          <Show when="signed-out">
+            <div className="flex gap-2 pt-2">
+              <SignInButton>
+                <button
+                  onClick={() => setMobileOpen(false)}
+                  className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300"
+                >
+                  Log in
+                </button>
+              </SignInButton>
+              <Link
+                href="/#generator"
+                onClick={() => setMobileOpen(false)}
+                className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white"
+              >
+                Create QR
+              </Link>
+            </div>
+          </Show>
+          <Show when="signed-in">
             <Link
-              href="/login"
+              href="/dashboard"
               onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-xl border border-gray-300 px-4 py-2.5 text-center text-sm font-medium text-gray-700 dark:border-gray-700 dark:text-gray-300"
+              className="block rounded-lg px-4 py-2.5 text-sm font-medium text-primary"
             >
-              Log in
+              Dashboard
             </Link>
-            <Link
-              href="/#generator"
-              onClick={() => setMobileOpen(false)}
-              className="flex-1 rounded-xl bg-primary px-4 py-2.5 text-center text-sm font-semibold text-white"
-            >
-              Create QR
-            </Link>
-          </div>
+          </Show>
         </nav>
       </div>
     </header>

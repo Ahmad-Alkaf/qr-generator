@@ -70,7 +70,7 @@ export default function PricingPage() {
                   ))}
                 </ul>
                 <Link
-                  href={key === "FREE" ? "/#generator" : "/login"}
+                  href={key === "FREE" ? "/#generator" : "/sign-up"}
                   className={`mt-8 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3.5 text-sm font-semibold transition-colors ${
                     key === "PRO"
                       ? "bg-primary text-white hover:bg-primary-dark"
