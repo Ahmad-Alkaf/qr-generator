@@ -69,12 +69,21 @@ export async function POST(req: Request) {
 
       // Build data & generate shortCode
       const destinationData = buildQRData(type, content);
+      const MAX_RETRIES = 10;
       let shortCode = generateShortCode();
-      let exists = await prisma.qRCode.findUnique({ where: { shortCode } });
-      while (exists) {
+      let exists = null;
+      let attempts = 1;
+      do {
+        if (attempts >= MAX_RETRIES) {
+          return NextResponse.json(
+            { error: "Failed to generate unique short code. Please try again." },
+            { status: 500 }
+          );
+        }
         shortCode = generateShortCode();
         exists = await prisma.qRCode.findUnique({ where: { shortCode } });
-      }
+        attempts++;
+      } while (exists);
 
       await prisma.qRCode.create({
         data: {
@@ -145,7 +154,7 @@ export async function POST(req: Request) {
       headers: {
         "Content-Type": "image/png",
         "Content-Disposition": `attachment; filename="qrforge-${type.toLowerCase()}.png"`,
-        "Cache-Control": "public, max-age=31536000, immutable",
+        "Cache-Control": "no-store",
       },
     });
   } catch (error) {

@@ -132,7 +132,8 @@ export default async function QRCodeDetailPage({
               </div>
               <div className="mt-4 space-y-3">
                 {sortedDevices.map(([device, count]) => {
-                  const pct = Math.round((count / qrCode._count.scans) * 100);
+                  const sampleTotal = qrCode.scans.length;
+                  const pct = sampleTotal > 0 ? Math.round((count / sampleTotal) * 100) : 0;
                   return (
                     <div key={device}>
                       <div className="flex items-center justify-between text-sm">

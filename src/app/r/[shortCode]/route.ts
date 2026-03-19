@@ -21,9 +21,15 @@ export async function GET(
   const headers = Object.fromEntries(new Headers(req.headers));
   logScan(qr.id, headers, req.url).catch(console.error);
 
-  // For URLs, redirect directly. For non-URL content (vCard, Wi-Fi, etc.),
-  // the destinationUrl is the encoded data string, so redirect to it.
-  return NextResponse.redirect(qr.destinationUrl, { status: 302 });
+  // Only allow http(s) redirects to prevent open-redirect to javascript:, data:, etc.
+  const dest = qr.destinationUrl;
+  if (!/^https?:\/\//i.test(dest)) {
+    return NextResponse.redirect(new URL("/not-found", req.url), {
+      status: 302,
+    });
+  }
+
+  return NextResponse.redirect(dest, { status: 302 });
 }
 
 async function logScan(
