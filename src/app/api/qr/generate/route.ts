@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth, clerkClient } from "@clerk/nextjs/server";
+import { z } from "zod";
 import { qrGenerateSchema, buildQRData } from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
 import { generateShortCode } from "@/lib/shortcode";
@@ -13,7 +14,7 @@ export async function POST(req: Request) {
 
     if (!parsed.success) {
       return NextResponse.json(
-        { error: "Invalid input", details: parsed.error.flatten() },
+        { error: "Invalid input", details: z.treeifyError(parsed.error) },
         { status: 400 }
       );
     }
@@ -28,20 +29,18 @@ export async function POST(req: Request) {
       isDirect,
     } = parsed.data;
 
+    const { userId } = await auth();
+
     // Non-URL types require authentication
-    if (type !== "URL") {
-      const { userId } = await auth();
-      if (!userId) {
-        return NextResponse.json(
-          { error: "Sign in required to use this QR code type" },
-          { status: 401 }
-        );
-      }
+    if (type !== "URL" && !userId) {
+      return NextResponse.json(
+        { error: "Sign in required to use this QR code type" },
+        { status: 401 }
+      );
     }
 
     // Tracked QR codes require authentication
     if (!isDirect) {
-      const { userId } = await auth();
       if (!userId) {
         return NextResponse.json(
           { error: "Sign in required to create Tracked QR codes" },
@@ -105,7 +104,6 @@ export async function POST(req: Request) {
     }
 
     // Direct mode — save to account if authenticated
-    const { userId } = await auth();
     if (userId) {
       const user = await prisma.user.findUnique({ where: { clerkId: userId } });
       if (user) {
