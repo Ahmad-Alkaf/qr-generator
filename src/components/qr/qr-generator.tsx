@@ -44,6 +44,9 @@ const QR_TYPE_OPTIONS: { value: QRTypeValue; label: string; icon: React.Componen
   { value: "PLAIN_TEXT", label: "Text", icon: Type },
 ];
 
+// Types that encode HTTP URLs and can be tracked via 301 redirect
+const TRACKABLE_TYPES = new Set<QRTypeValue>(["URL", "PDF", "WHATSAPP"]);
+
 const FRAME_STYLES: { value: QRFrameStyle; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "plain", label: "Classic", icon: Square },
   { value: "rounded", label: "Rounded", icon: () => <div className="h-4 w-4 rounded-md border-2 border-current" /> },
@@ -116,7 +119,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
     } finally {
       setDownloadingFormat(null);
     }
-  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn, downloadingFormat]);
+  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn, downloadingFormat, frameStyle]);
 
   const handleContentChange = useCallback((value: string) => {
     setContent(value);
@@ -151,6 +154,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                     if (value !== type) {
                       setType(value);
                       setContent("");
+                      if (!TRACKABLE_TYPES.has(value)) setIsDirect(true);
                     }
                   }}
                   className={cn(
@@ -170,7 +174,8 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           {/* Type-specific fields */}
           <QRTypeFields key={type} type={type} onChange={handleContentChange} />
 
-          {/* QR Mode: Direct vs Tracked */}
+          {/* QR Mode: Direct vs Tracked (only for types that support HTTP redirect tracking) */}
+          {TRACKABLE_TYPES.has(type) && (
           <div>
             <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
               QR Mode
@@ -226,6 +231,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
               </div>
             )}
           </div>
+          )}
 
           {/* QR Style */}
           <div>
