@@ -1,13 +1,15 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { QrCode, BarChart3, Eye } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
   const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const user = await prisma.user.findUnique({
-    where: { clerkId: userId! },
+    where: { clerkId: userId },
     include: {
       _count: { select: { qrCodes: true } },
     },

@@ -1,12 +1,14 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { Globe, Smartphone, Monitor } from "lucide-react";
 
 export default async function AnalyticsPage() {
   const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const user = await prisma.user.findUnique({
-    where: { clerkId: userId! },
+    where: { clerkId: userId },
   });
 
   const scans = user

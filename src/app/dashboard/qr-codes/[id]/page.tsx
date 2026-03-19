@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { notFound } from "next/navigation";
 import Link from "next/link";
@@ -11,9 +12,10 @@ export default async function QRCodeDetailPage({
 }) {
   const { id } = await params;
   const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const user = await prisma.user.findUnique({
-    where: { clerkId: userId! },
+    where: { clerkId: userId },
   });
   if (!user) notFound();
 

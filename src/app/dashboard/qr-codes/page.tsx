@@ -1,4 +1,5 @@
 import { auth } from "@clerk/nextjs/server";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
 import { ExternalLink, BarChart3, Zap, Trash2 } from "lucide-react";
@@ -6,9 +7,10 @@ import { DeleteQRButton } from "./delete-button";
 
 export default async function QRCodesPage() {
   const { userId } = await auth();
+  if (!userId) redirect("/sign-in");
 
   const user = await prisma.user.findUnique({
-    where: { clerkId: userId! },
+    where: { clerkId: userId },
   });
 
   const qrCodes = user
