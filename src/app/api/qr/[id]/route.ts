@@ -1,6 +1,12 @@
 import { NextResponse } from "next/server";
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
+import { z } from "zod";
+
+const patchSchema = z.object({
+  name: z.string().max(255).optional(),
+  destinationUrl: z.url().max(2048).optional(),
+});
 
 export async function DELETE(
   req: Request,
@@ -61,13 +67,26 @@ export async function PATCH(
     return NextResponse.json({ error: "Not found" }, { status: 404 });
   }
 
-  const body = await req.json();
+  let body: unknown;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  const parsed = patchSchema.safeParse(body);
+  if (!parsed.success) {
+    return NextResponse.json(
+      { error: "Invalid input", details: z.treeifyError(parsed.error) },
+      { status: 400 }
+    );
+  }
 
   const updated = await prisma.qRCode.update({
     where: { id },
     data: {
-      name: body.name ?? qrCode.name,
-      destinationUrl: body.destinationUrl ?? qrCode.destinationUrl,
+      name: parsed.data.name ?? qrCode.name,
+      destinationUrl: parsed.data.destinationUrl ?? qrCode.destinationUrl,
     },
   });
 
