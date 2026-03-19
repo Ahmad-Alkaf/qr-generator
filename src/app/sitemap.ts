@@ -3,7 +3,7 @@ import type { MetadataRoute } from "next";
 const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.qrforge.app";
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  const qrTypes = ["url", "wifi", "vcard", "email", "sms", "whatsapp", "pdf"];
+  const qrTypes = ["url", "wifi", "vcard", "email", "sms", "whatsapp", "pdf", "plain-text"];
 
   const staticPages: MetadataRoute.Sitemap = [
     {

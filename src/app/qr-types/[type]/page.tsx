@@ -149,6 +149,25 @@ const QR_TYPE_PAGES: Record<
       },
     ],
   },
+  "plain-text": {
+    qrType: "PLAIN_TEXT",
+    title: "Plain Text QR Code Generator — Encode Any Text in a QR Code",
+    h1: "Plain Text QR Code Generator",
+    description:
+      "Create a QR code that displays plain text when scanned. Perfect for short messages, serial numbers, codes, and notes.",
+    content:
+      "Plain Text QR codes encode any text you want — when scanned, the text is displayed directly on the user's device. Use them for short messages, coupon codes, serial numbers, instructions, or any text that doesn't need to be a link. Since the text is embedded directly in the QR code, no internet connection is required to read it.",
+    faqs: [
+      {
+        q: "How much text can a plain text QR code hold?",
+        a: "A QR code can hold up to about 4,296 characters of text. However, shorter text produces a simpler, more scannable QR code. We recommend keeping it under 300 characters for best results.",
+      },
+      {
+        q: "Does scanning a plain text QR code require an internet connection?",
+        a: "No! The text is encoded directly in the QR code itself, so it can be read entirely offline.",
+      },
+    ],
+  },
 };
 
 const ALL_QR_TYPE_SLUGS = Object.keys(QR_TYPE_PAGES);

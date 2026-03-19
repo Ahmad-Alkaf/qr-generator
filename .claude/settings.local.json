@@ -28,7 +28,9 @@
       "WebFetch(domain:github.com)",
       "WebFetch(domain:www.npmjs.com)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(npm run build:*)"
+      "Bash(npm run build:*)",
+      "Bash(ls:*)",
+      "Bash(find C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator/node_modules/next/dist/docs -type f -name *sitemap*)"
     ]
   }
 }
