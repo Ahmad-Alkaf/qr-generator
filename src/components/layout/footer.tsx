@@ -7,12 +7,11 @@ const footerLinks = {
     { href: "/qr-types/wifi", label: "Wi-Fi QR Code" },
     { href: "/qr-types/vcard", label: "vCard QR Code" },
     { href: "/qr-types/email", label: "Email QR Code" },
-    { href: "/support", label: "Support Me" },
   ],
   Company: [
     { href: "/about", label: "About" },
     { href: "/contact", label: "Contact" },
-    { href: "/blog", label: "Blog" },
+    { href: "/support", label: "Support Me" },
   ],
   Legal: [
     { href: "/privacy", label: "Privacy Policy" },

@@ -42,7 +42,7 @@ export default function SupportPage() {
 
         <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
           A payment portal is coming soon. In the meantime, sharing QRForge with
-          others is the best way to support us!
+          others is the best way to support me!
         </p>
 
         <Link
