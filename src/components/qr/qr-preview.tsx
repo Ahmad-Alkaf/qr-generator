@@ -50,7 +50,7 @@ export function QRPreview({
       dotsOptions: { color: fgColor, type: dotType },
       cornersSquareOptions: { color: fgColor, type: cornerSquareType },
       cornersDotOptions: { color: fgColor, type: cornerDotType },
-      backgroundOptions: { color: "transparent" },
+      backgroundOptions: { color: bgColor },
       qrOptions: { errorCorrectionLevel: level },
     });
 
@@ -74,7 +74,7 @@ export function QRPreview({
   return (
     <div
       className="inline-flex rounded-2xl p-4 shadow-lg"
-      style={{ backgroundColor: bgColor === "transparent" ? "#FFFFFF" : bgColor }}
+      style={{ backgroundColor: bgColor === "transparent" ? "transparent" : bgColor }}
     >
       <div ref={containerRef} style={{ width: size, height: size }} />
     </div>
