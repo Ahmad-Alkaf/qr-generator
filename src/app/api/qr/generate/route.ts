@@ -71,20 +71,18 @@ export async function POST(req: Request) {
       // Build data & generate shortCode
       const destinationData = buildQRData(type, content);
       const MAX_RETRIES = 10;
-      let shortCode = generateShortCode();
-      let exists = null;
-      let attempts = 1;
-      do {
-        if (attempts >= MAX_RETRIES) {
+      let shortCode = "";
+      for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
+        shortCode = generateShortCode();
+        const exists = await prisma.qRCode.findUnique({ where: { shortCode } });
+        if (!exists) break;
+        if (attempt === MAX_RETRIES - 1) {
           return NextResponse.json(
             { error: "Failed to generate unique short code. Please try again." },
             { status: 500 }
           );
         }
-        shortCode = generateShortCode();
-        exists = await prisma.qRCode.findUnique({ where: { shortCode } });
-        attempts++;
-      } while (exists);
+      }
 
       await prisma.qRCode.create({
         data: {
