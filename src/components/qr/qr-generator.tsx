@@ -60,7 +60,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
   const [type, setType] = useState<QRTypeValue>(defaultType);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
-  const [isDirect, setIsDirect] = useState(true);
+  const [isDirect, setIsDirect] = useState(false);
   const [downloadingFormat, setDownloadingFormat] = useState<"png" | "svg" | "pdf" | null>(null);
   const [errorCorrection, setErrorCorrection] = useState<"L" | "M" | "Q" | "H">("M");
   const [frameStyle, setFrameStyle] = useState<QRFrameStyle>("plain");

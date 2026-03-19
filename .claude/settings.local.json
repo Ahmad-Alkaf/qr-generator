@@ -20,7 +20,10 @@
       "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" diff --cached --stat)",
       "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" diff --cached)",
       "Bash(git -C \"C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator\" diff --stat)",
-      "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generator -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name postcss.config.* \\\\\\))"
+      "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generator -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name postcss.config.* \\\\\\))",
+      "Bash(find /c/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator/src -name *.md -o -name *.txt)",
+      "Bash(npx tsc:*)",
+      "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generatorsrc -name *.env* -type f)"
     ]
   }
 }

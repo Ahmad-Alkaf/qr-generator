@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, forwardRef } from "react";
 import {
   Link as LinkIcon,
   Wifi,
@@ -40,33 +40,82 @@ interface FieldProps {
   onChange: (content: string) => void;
 }
 
-function IconInput({
-  icon: Icon,
-  ...props
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-} & React.InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <div className="relative">
-      <Icon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
-      <input {...props} className={inputClass} />
-    </div>
-  );
+const IconInput = forwardRef<
+  HTMLInputElement,
+  { icon: React.ComponentType<{ className?: string }> } & React.InputHTMLAttributes<HTMLInputElement>
+>(({ icon: Icon, ...props }, ref) => (
+  <div className="relative">
+    <Icon className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
+    <input ref={ref} {...props} className={inputClass} />
+  </div>
+));
+IconInput.displayName = "IconInput";
+
+const VALID_DOMAIN = /^(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/;
+
+function getUrlWarning(val: string): "protocol" | "domain" | null {
+  if (!val) return null;
+
+  const hasProtocol = /^https?:\/\//i.test(val);
+
+  // Extract hostname: strip protocol, then take part before /, ?, #, and remove port
+  let hostname = val.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].replace(/:\d+$/, "");
+
+  if (!VALID_DOMAIN.test(hostname)) return "domain";
+  if (!hasProtocol) return "protocol";
+  return null;
 }
 
 function URLFields({ onChange }: FieldProps) {
+  const [warning, setWarning] = useState<"protocol" | "domain" | null>(null);
+  const [inputValue, setInputValue] = useState("");
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const prefixWithHttps = () => {
+    const fixed = `https://${inputValue}`;
+    if (inputRef.current) inputRef.current.value = fixed;
+    setInputValue(fixed);
+    onChange(fixed);
+    setWarning(null);
+  };
+
   return (
     <div>
       <label className={labelClass}>Website URL</label>
       <IconInput
+        ref={inputRef}
         icon={LinkIcon}
         type="url"
         placeholder="https://example.com"
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setInputValue(e.target.value.trim());
+          if (warning) setWarning(getUrlWarning(e.target.value.trim()));
+        }}
+        onBlur={(e) => setWarning(getUrlWarning(e.target.value.trim()))}
       />
-      <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
-        The full URL including https://
-      </p>
+      {warning === "protocol" ? (
+        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+          It looks like you forgot the protocol. Did you mean{" "}
+          <strong>https://{inputValue}</strong>?{" "}
+          <button
+            type="button"
+            onClick={prefixWithHttps}
+            className="font-semibold underline hover:text-amber-700 dark:hover:text-amber-300"
+          >
+            Yes
+          </button>
+        </p>
+      ) : warning === "domain" ? (
+        <p className="mt-1.5 text-xs text-amber-600 dark:text-amber-400">
+          This doesn&apos;t look like a valid URL. Make sure it includes a
+          domain like <strong>https://example.com</strong>
+        </p>
+      ) : (
+        <p className="mt-1.5 text-xs text-gray-500 dark:text-gray-400">
+          The full URL including https://
+        </p>
+      )}
     </div>
   );
 }
