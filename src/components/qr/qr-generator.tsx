@@ -2,7 +2,6 @@
 
 import { useState, useCallback } from "react";
 import {
-  Download,
   Loader2,
   Zap,
   BarChart3,
@@ -14,19 +13,36 @@ import {
   Square,
   ScanLine,
   Frame,
+  Link as LinkIcon,
+  Wifi,
+  Contact,
+  Mail,
+  MessageSquare,
+  MessageCircle,
+  Type,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import NextLink from "next/link";
 import { QRPreview, type QRFrameStyle } from "./qr-preview";
 import { QRTypeFields } from "./qr-type-fields";
 import { buildQRData, type QRTypeValue } from "@/lib/qr";
-import { UpgradeDialog } from "@/components/ui/upgrade-dialog";
 import { cn } from "@/lib/utils";
 
 interface QRGeneratorProps {
   defaultType?: QRTypeValue;
   compact?: boolean;
 }
+
+const QR_TYPE_OPTIONS: { value: QRTypeValue; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
+  { value: "URL", label: "URL", icon: LinkIcon },
+  { value: "WIFI", label: "Wi-Fi", icon: Wifi },
+  { value: "VCARD", label: "vCard", icon: Contact },
+  { value: "EMAIL", label: "Email", icon: Mail },
+  { value: "SMS", label: "SMS", icon: MessageSquare },
+  { value: "WHATSAPP", label: "WhatsApp", icon: MessageCircle },
+  { value: "PDF", label: "PDF", icon: FileText },
+  { value: "PLAIN_TEXT", label: "Text", icon: Type },
+];
 
 const FRAME_STYLES: { value: QRFrameStyle; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "plain", label: "Classic", icon: Square },
@@ -38,15 +54,13 @@ const FRAME_STYLES: { value: QRFrameStyle; label: string; icon: React.ComponentT
 export function QRGenerator({ defaultType = "URL", compact = false }: QRGeneratorProps) {
   const { isSignedIn } = useUser();
   const [content, setContent] = useState("");
-  const [type] = useState<QRTypeValue>(defaultType);
+  const [type, setType] = useState<QRTypeValue>(defaultType);
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [isDirect, setIsDirect] = useState(true);
-  const [downloading, setDownloading] = useState(false);
+  const [downloadingFormat, setDownloadingFormat] = useState<"png" | "svg" | "pdf" | null>(null);
   const [errorCorrection, setErrorCorrection] = useState<"L" | "M" | "Q" | "H">("M");
   const [frameStyle, setFrameStyle] = useState<QRFrameStyle>("plain");
-  const [upgradeFeature, setUpgradeFeature] = useState<string | null>(null);
-
   const directData = content ? buildQRData(type, content) : "";
   // For the live preview: Direct shows actual content, Tracked shows a placeholder redirect URL
   const qrData = isDirect
@@ -55,15 +69,15 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
       ? `${typeof window !== "undefined" ? window.location.origin : ""}/r/preview`
       : "";
 
-  const handleDownload = useCallback(async () => {
-    if (!content) return;
+  const handleDownload = useCallback(async (format: "png" | "svg" | "pdf") => {
+    if (!content || downloadingFormat) return;
 
     // Block tracked QR for unauthenticated users
     if (!isDirect && !isSignedIn) {
       return;
     }
 
-    setDownloading(true);
+    setDownloadingFormat(format);
 
     try {
       const res = await fetch("/api/qr/generate", {
@@ -77,6 +91,8 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
           size: 600,
           errorCorrection,
           isDirect,
+          format,
+          frameStyle,
         }),
       });
 
@@ -90,7 +106,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
       a.href = url;
-      a.download = `qrforge-${type.toLowerCase()}.png`;
+      a.download = `qrforge-${type.toLowerCase()}.${format}`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
@@ -98,15 +114,17 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
     } catch {
       alert("Failed to generate QR code. Please try again.");
     } finally {
-      setDownloading(false);
+      setDownloadingFormat(null);
     }
-  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn]);
+  }, [type, content, fgColor, bgColor, errorCorrection, isDirect, isSignedIn, downloadingFormat]);
 
   const handleContentChange = useCallback((value: string) => {
     setContent(value);
   }, []);
 
   const showSignInPrompt = !isDirect && !isSignedIn;
+  const needsLoginForType = type !== "URL" && !isSignedIn;
+  const needsLoginForFormat = !isSignedIn;
 
   return (
     <>
@@ -119,8 +137,38 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
       >
         {/* Left: Form */}
         <div className="space-y-5">
+          {/* QR Type selector */}
+          <div>
+            <label className="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-300">
+              QR Type
+            </label>
+            <div className="flex flex-wrap gap-1.5">
+              {QR_TYPE_OPTIONS.map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => {
+                    if (value !== type) {
+                      setType(value);
+                      setContent("");
+                    }
+                  }}
+                  className={cn(
+                    "flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all",
+                    type === value
+                      ? "bg-primary text-white shadow-sm"
+                      : "bg-gray-100 text-gray-600 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {label}
+                </button>
+              ))}
+            </div>
+          </div>
+
           {/* Type-specific fields */}
-          <QRTypeFields type={type} onChange={handleContentChange} />
+          <QRTypeFields key={type} type={type} onChange={handleContentChange} />
 
           {/* QR Mode: Direct vs Tracked */}
           <div>
@@ -295,41 +343,88 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                 <LogIn className="h-4 w-4" />
                 Sign in to Create Tracked QR Code
               </NextLink>
+            ) : needsLoginForType ? (
+              <NextLink
+                href="/sign-in"
+                className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-6 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark"
+              >
+                <LogIn className="h-4 w-4" />
+                Sign in to Download
+              </NextLink>
             ) : (
-              <div className="grid grid-cols-3 gap-2">
-                {/* PNG — free */}
-                <button
-                  onClick={handleDownload}
-                  disabled={!content || downloading}
-                  className="flex items-center justify-center gap-2 rounded-xl bg-primary px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-dark disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {downloading ? (
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                  ) : (
-                    <FileImage className="h-4 w-4" />
-                  )}
-                  PNG
-                </button>
+              <div className="grid grid-cols-3 gap-2.5">
+                {([
+                  {
+                    format: "png" as const,
+                    label: "PNG",
+                    sub: "Raster",
+                    icon: FileImage,
+                    locked: false,
+                    bg: "bg-amber-600/20 hover:bg-amber-600/30 dark:bg-amber-500/15 dark:hover:bg-amber-500/25",
+                    activeBg: "bg-amber-600/30 dark:bg-amber-500/25",
+                  },
+                  {
+                    format: "svg" as const,
+                    label: "SVG",
+                    sub: "Vector",
+                    icon: FileCode2,
+                    locked: needsLoginForFormat,
+                    bg: "bg-emerald-600/20 hover:bg-emerald-600/30 dark:bg-emerald-500/15 dark:hover:bg-emerald-500/25",
+                    activeBg: "bg-emerald-600/30 dark:bg-emerald-500/25",
+                  },
+                  {
+                    format: "pdf" as const,
+                    label: "PDF",
+                    sub: "Print",
+                    icon: FileText,
+                    locked: needsLoginForFormat,
+                    bg: "bg-rose-600/20 hover:bg-rose-600/30 dark:bg-rose-500/15 dark:hover:bg-rose-500/25",
+                    activeBg: "bg-rose-600/30 dark:bg-rose-500/25",
+                  },
+                ] as const).map(({ format, label, sub, icon: Icon, locked, bg, activeBg }) => {
+                  const isActive = downloadingFormat === format;
+                  const isDisabled = !content || !!downloadingFormat;
 
-                {/* SVG — Pro only */}
-                <button
-                  onClick={() => setUpgradeFeature("SVG downloads")}
-                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:border-gray-300 hover:text-gray-500 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600"
-                >
-                  <FileCode2 className="h-4 w-4" />
-                  SVG
-                  <Lock className="h-3 w-3" />
-                </button>
+                  if (locked) {
+                    return (
+                      <NextLink
+                        key={format}
+                        href="/sign-in"
+                        className="group flex flex-col items-center gap-2 rounded-xl bg-gray-200 px-4 py-4 text-center opacity-50 transition-all hover:opacity-70 dark:bg-gray-800"
+                      >
+                        <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
+                        <div>
+                          <div className="text-sm font-semibold text-gray-500 dark:text-gray-400">{label}</div>
+                          <div className="text-[11px] text-gray-400 dark:text-gray-500">{sub}</div>
+                        </div>
+                      </NextLink>
+                    );
+                  }
 
-                {/* PDF — Pro only */}
-                <button
-                  onClick={() => setUpgradeFeature("PDF downloads")}
-                  className="flex items-center justify-center gap-2 rounded-xl border-2 border-gray-200 px-4 py-3 text-sm font-medium text-gray-400 transition-all hover:border-gray-300 hover:text-gray-500 dark:border-gray-700 dark:text-gray-500 dark:hover:border-gray-600"
-                >
-                  <FileText className="h-4 w-4" />
-                  PDF
-                  <Lock className="h-3 w-3" />
-                </button>
+                  return (
+                    <button
+                      key={format}
+                      onClick={() => handleDownload(format)}
+                      disabled={isDisabled}
+                      className={cn(
+                        "group flex flex-col items-center gap-2 rounded-xl px-4 py-4 text-center shadow-sm transition-all duration-200",
+                        "disabled:cursor-not-allowed disabled:opacity-40",
+                        !isDisabled && "active:scale-[0.97] hover:shadow-md",
+                        isActive ? activeBg : bg
+                      )}
+                    >
+                      {isActive ? (
+                        <Loader2 className="h-5 w-5 animate-spin text-gray-700 dark:text-gray-200" />
+                      ) : (
+                        <Icon className="h-5 w-5 text-gray-700 dark:text-gray-200" />
+                      )}
+                      <div>
+                        <div className="text-sm font-semibold text-gray-700 dark:text-gray-200">{label}</div>
+                        <div className="text-[11px] text-gray-500 dark:text-gray-400">{sub}</div>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -348,12 +443,6 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
         </div>
       </div>
 
-      {/* Upgrade dialog */}
-      <UpgradeDialog
-        open={upgradeFeature !== null}
-        onClose={() => setUpgradeFeature(null)}
-        feature={upgradeFeature ?? ""}
-      />
     </>
   );
 }
