@@ -9,7 +9,7 @@ import { cn } from "@/lib/utils";
 
 const navLinks = [
   { href: "/qr-types/url", label: "QR Types" },
-  { href: "/pricing", label: "Pricing" },
+  { href: "/support", label: "Support Me" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
 ];

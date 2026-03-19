@@ -7,7 +7,7 @@ const footerLinks = {
     { href: "/qr-types/wifi", label: "Wi-Fi QR Code" },
     { href: "/qr-types/vcard", label: "vCard QR Code" },
     { href: "/qr-types/email", label: "Email QR Code" },
-    { href: "/pricing", label: "Pricing" },
+    { href: "/support", label: "Support Me" },
   ],
   Company: [
     { href: "/about", label: "About" },
@@ -37,7 +37,7 @@ export function Footer() {
               </span>
             </Link>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-              Create, customize, and track QR codes. Free forever for basic use.
+              Create, customize, and track QR codes. Free for everyone.
             </p>
           </div>
 

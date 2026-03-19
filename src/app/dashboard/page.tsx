@@ -1,6 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { prisma } from "@/lib/prisma";
-import { QrCode, BarChart3, Eye, TrendingUp } from "lucide-react";
+import { QrCode, BarChart3, Eye } from "lucide-react";
 import Link from "next/link";
 
 export default async function DashboardPage() {
@@ -49,11 +49,6 @@ export default async function DashboardPage() {
       label: "Total Scans",
       value: totalScans,
       icon: BarChart3,
-    },
-    {
-      label: "Plan",
-      value: user?.plan ?? "FREE",
-      icon: TrendingUp,
     },
   ];
 

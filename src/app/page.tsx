@@ -10,13 +10,11 @@ import {
   BarChart3,
   Shield,
   ArrowRight,
-  Check,
   Star,
   ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { QRGenerator } from "@/components/qr/qr-generator";
-import { PLANS } from "@/lib/constants";
 
 const qrTypes = [
   { icon: LinkIcon, label: "URL", slug: "url", description: "Link to any website" },
@@ -75,19 +73,19 @@ const faqs = [
   },
   {
     q: "Is QRForge really free?",
-    a: "Yes! You can create up to 5 static QR codes per day for free, no account required. Sign up for a free account to get 10 per month. Our Pro and Business plans offer unlimited QR codes with advanced features.",
+    a: "Yes! QRForge is completely free with all features unlocked. Create unlimited QR codes, download in any format, and use all QR types at no cost.",
   },
   {
     q: "Can I customize my QR code with colors and a logo?",
-    a: "Free users can customize foreground and background colors. Pro users can also upload custom logos and choose from multiple dot styles (squares, dots, rounded).",
+    a: "Yes! You can customize foreground and background colors for all QR codes.",
   },
   {
     q: "What QR code types are supported?",
-    a: "We support URL, Wi-Fi, vCard (contact), Email, SMS, WhatsApp, PDF, and Plain Text QR codes. Free users have access to URL, Plain Text, Email, and SMS types.",
+    a: "We support URL, Wi-Fi, vCard (contact), Email, SMS, WhatsApp, PDF, and Plain Text QR codes. All types are available for free.",
   },
   {
     q: "Can I edit a QR code after printing it?",
-    a: "Yes — if you create a Tracked QR code, you can change the destination URL at any time without reprinting the physical QR code. This is a Pro feature.",
+    a: "Yes — if you create a Tracked QR code, you can change the destination URL at any time without reprinting the physical QR code. Just sign in to use Tracked mode.",
   },
   {
     q: "How do scan analytics work?",
@@ -149,7 +147,7 @@ export default function HomePage() {
           <div className="text-center">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-50 px-4 py-1.5 text-sm font-medium text-primary dark:border-primary/30 dark:bg-primary/10">
               <Zap className="h-3.5 w-3.5" />
-              Now with Direct &amp; Tracked QR modes
+              100% Free — All Features Unlocked
             </div>
             <h1 className="font-heading text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white">
               Create QR Codes
@@ -305,78 +303,22 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* Pricing */}
-      <section id="pricing" className="bg-gray-50 py-20 dark:bg-gray-900/50">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
-              Simple, Transparent Pricing
-            </h2>
-            <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-              Start free. Upgrade when you need more.
-            </p>
-          </div>
-          <div className="mt-12 grid gap-8 md:grid-cols-3">
-            {(Object.entries(PLANS) as [string, (typeof PLANS)[keyof typeof PLANS]][]).map(
-              ([key, plan]) => (
-                <div
-                  key={key}
-                  className={`relative rounded-2xl border p-8 ${
-                    key === "PRO"
-                      ? "border-primary bg-white shadow-xl ring-2 ring-primary dark:bg-gray-900"
-                      : "border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900"
-                  }`}
-                >
-                  {key === "PRO" && (
-                    <div className="absolute -top-4 left-1/2 -translate-x-1/2 rounded-full bg-primary px-4 py-1 text-xs font-semibold text-white">
-                      Most Popular
-                    </div>
-                  )}
-                  <h3 className="font-heading text-xl font-bold text-gray-900 dark:text-white">
-                    {plan.name}
-                  </h3>
-                  <div className="mt-4">
-                    <span className="text-4xl font-extrabold text-gray-900 dark:text-white">
-                      ${plan.price.monthly}
-                    </span>
-                    {plan.price.monthly > 0 && (
-                      <span className="text-gray-500 dark:text-gray-400">/month</span>
-                    )}
-                  </div>
-                  {plan.price.yearly > 0 && (
-                    <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                      or ${plan.price.yearly}/year (save{" "}
-                      {Math.round(
-                        (1 - plan.price.yearly / (plan.price.monthly * 12)) * 100
-                      )}
-                      %)
-                    </p>
-                  )}
-                  <ul className="mt-6 space-y-3">
-                    {plan.features.map((feature) => (
-                      <li key={feature} className="flex items-start gap-2">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-                        <span className="text-sm text-gray-600 dark:text-gray-400">
-                          {feature}
-                        </span>
-                      </li>
-                    ))}
-                  </ul>
-                  <Link
-                    href={key === "FREE" ? "/#generator" : "/pricing"}
-                    className={`mt-8 flex w-full items-center justify-center gap-2 rounded-xl px-6 py-3 text-sm font-semibold transition-colors ${
-                      key === "PRO"
-                        ? "bg-primary text-white hover:bg-primary-dark"
-                        : "border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:text-gray-300 dark:hover:bg-gray-700"
-                    }`}
-                  >
-                    {key === "FREE" ? "Get Started Free" : `Choose ${plan.name}`}
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                </div>
-              )
-            )}
-          </div>
+      {/* Support */}
+      <section id="support" className="bg-gray-50 py-20 dark:bg-gray-900/50">
+        <div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+          <h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+            Support QRForge
+          </h2>
+          <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+            QRForge is completely free with all features unlocked. If you find it useful, consider supporting the project to help keep it running and growing.
+          </p>
+          <Link
+            href="/support"
+            className="mt-8 inline-flex items-center gap-2 rounded-xl bg-primary px-8 py-3.5 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-primary-dark"
+          >
+            Support Me
+            <ArrowRight className="h-4 w-4" />
+          </Link>
         </div>
       </section>
 
