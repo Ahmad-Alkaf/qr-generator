@@ -23,7 +23,11 @@
       "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generator -type f \\\\\\(-name *.css -o -name tailwind.config.* -o -name postcss.config.* \\\\\\))",
       "Bash(find /c/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator/src -name *.md -o -name *.txt)",
       "Bash(npx tsc:*)",
-      "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generatorsrc -name *.env* -type f)"
+      "Bash(find C:UsersahmadDesktopAHKMyProgramsJSqr-generatorsrc -name *.env* -type f)",
+      "WebSearch",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:www.npmjs.com)",
+      "WebFetch(domain:raw.githubusercontent.com)"
     ]
   }
 }
