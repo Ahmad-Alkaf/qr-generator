@@ -33,7 +33,7 @@ SITE_URL  ),
     "create QR code",
     "custom QR code",
     "free QR code",
-    "dynamic QR code",
+    "tracked QR code",
     "QR code maker",
   ],
   openGraph: {
