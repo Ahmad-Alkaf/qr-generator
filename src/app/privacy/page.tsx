@@ -165,10 +165,8 @@ export default function PrivacyPage() {
 						</h2>
 						<p className="mt-3">
 							We use essential cookies for authentication and
-							session management. We may use analytics cookies
-							(Google Analytics) to understand usage patterns. You
-							can control cookie preferences through your browser
-							settings.
+							session management. You can control cookie
+							preferences through your browser settings.
 						</p>
 					</section>
 
