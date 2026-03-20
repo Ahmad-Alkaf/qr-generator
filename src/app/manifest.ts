@@ -1,11 +1,12 @@
+import { SITE_NAME } from './../lib/constants';
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "QRForge — Free QR Code Generator",
-    short_name: "QRForge",
+    name: `${SITE_NAME} — Free QR Code Generator`,
+    short_name: SITE_NAME,
     description:
-      "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors, add logos, and track scans.",
+      "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.",
     start_url: "/",
     display: "standalone",
     background_color: "#ffffff",
