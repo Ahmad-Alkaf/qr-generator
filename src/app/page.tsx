@@ -79,7 +79,7 @@ const features = [
 		icon: Shield,
 		title: 'Reliable & Secure',
 		description:
-			'Enterprise-grade infrastructure with 99.9% uptime. Your QR codes always work.'
+			'Built on modern infrastructure with reliable hosting. Your QR codes just work.'
 	}
 ];
 
