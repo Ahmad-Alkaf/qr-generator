@@ -110,7 +110,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
   const [fgColor, setFgColor] = useState("#000000");
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [transparentBg, setTransparentBg] = useState(false);
-  const [isDirect, setIsDirect] = useState(false);
+  const [isDirect, setIsDirect] = useState(true);
   const [downloadingFormat, setDownloadingFormat] = useState<"png" | "svg" | "pdf" | null>(null);
   const [errorCorrection, setErrorCorrection] = useState<"L" | "M" | "Q" | "H">("M");
   const [dotType, setDotType] = useState<QRDotType>("square");
