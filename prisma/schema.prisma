@@ -14,32 +14,18 @@ model User {
   email   String @unique
   name    String?
   image   String?
-  plan    Plan   @default(FREE)
-
   qrCodes         QRCode[]
   scans           Scan[]
   contactMessages ContactMessage[]
-
-  stripeCustomerId       String?   @unique
-  stripeSubscriptionId   String?   @unique
-  stripePriceId          String?
-  stripeCurrentPeriodEnd DateTime?
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@index([clerkId])
   @@index([email])
-  @@index([stripeCustomerId])
 }
 
 // ─── Core ────────────────────────────────────────────
-enum Plan {
-  FREE
-  PRO
-  BUSINESS
-}
-
 enum QRType {
   URL
   WIFI
@@ -73,9 +59,6 @@ model QRCode {
   // Tracked QR fields (isDirect=false)
   shortCode      String? @unique
   destinationUrl String? @db.Text
-
-  // Dynamic: tracked QR where destination can be changed after creation (Pro+)
-  isDynamic      Boolean @default(false)
 
   // File outputs
   pngUrl String?

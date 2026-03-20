@@ -113,7 +113,6 @@ export async function POST(req: Request) {
           isDirect: false,
           shortCode,
           destinationUrl: destinationData,
-          isDynamic: false,
         },
       });
 
