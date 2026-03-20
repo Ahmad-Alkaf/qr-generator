@@ -28,6 +28,14 @@ export const qrGenerateSchema = z.object({
 
 export type QRGenerateInput = z.infer<typeof qrGenerateSchema>;
 
+function escapeVCard(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/,/g, "\\,").replace(/\n/g, "\\n");
+}
+
+function escapeWifi(value: string): string {
+  return value.replace(/\\/g, "\\\\").replace(/;/g, "\\;").replace(/:/g, "\\:").replace(/"/g, '\\"');
+}
+
 export function buildQRData(type: QRTypeValue, content: string): string {
   switch (type) {
     case "URL":
@@ -35,8 +43,8 @@ export function buildQRData(type: QRTypeValue, content: string): string {
     case "WIFI": {
       try {
         const parsed = JSON.parse(content);
-        const ssid = parsed.ssid || "";
-        const password = parsed.password || "";
+        const ssid = escapeWifi(parsed.ssid || "");
+        const password = escapeWifi(parsed.password || "");
         const encryption = parsed.encryption || "WPA";
         const hidden = parsed.hidden ? "H:true" : "";
         return `WIFI:T:${encryption};S:${ssid};P:${password};${hidden};`;
@@ -47,17 +55,19 @@ export function buildQRData(type: QRTypeValue, content: string): string {
     case "VCARD": {
       try {
         const parsed = JSON.parse(content);
+        const firstName = escapeVCard(parsed.firstName || "");
+        const lastName = escapeVCard(parsed.lastName || "");
         return [
           "BEGIN:VCARD",
           "VERSION:3.0",
-          `N:${parsed.lastName || ""};${parsed.firstName || ""}`,
-          `FN:${parsed.firstName || ""} ${parsed.lastName || ""}`,
-          parsed.org ? `ORG:${parsed.org}` : "",
-          parsed.title ? `TITLE:${parsed.title}` : "",
+          `N:${lastName};${firstName}`,
+          `FN:${firstName} ${lastName}`,
+          parsed.org ? `ORG:${escapeVCard(parsed.org)}` : "",
+          parsed.title ? `TITLE:${escapeVCard(parsed.title)}` : "",
           parsed.phone ? `TEL:${parsed.phone}` : "",
           parsed.email ? `EMAIL:${parsed.email}` : "",
           parsed.url ? `URL:${parsed.url}` : "",
-          parsed.address ? `ADR:;;${parsed.address}` : "",
+          parsed.address ? `ADR:;;${escapeVCard(parsed.address)}` : "",
           "END:VCARD",
         ]
           .filter(Boolean)
