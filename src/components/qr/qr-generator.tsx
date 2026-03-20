@@ -132,6 +132,13 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
     try {
       let qrDataToEncode: string;
 
+      // Fire-and-forget: track every QR generation (including anonymous)
+      fetch("/api/qr/track", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ type }),
+      }).catch(() => {});
+
       if (isDirect) {
         qrDataToEncode = buildQRData(type, content);
         // Fire-and-forget save to user account

@@ -15,6 +15,7 @@ import {
 import Link from 'next/link';
 import {QRGenerator} from '@/components/qr/qr-generator';
 import {SITE_NAME, SITE_URL} from '@/lib/constants';
+import {getSiteStats, formatCount} from '@/lib/stats';
 
 const qrTypes = [
 	{
@@ -114,7 +115,8 @@ const faqs = [
 	}
 ];
 
-export default function HomePage() {
+export default async function HomePage() {
+	const {qrCount, userCount, scanCount} = await getSiteStats();
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@type': 'WebApplication',
@@ -182,6 +184,32 @@ export default function HomePage() {
 				</div>
 			</section>
 
+
+			{/* Stats */}
+			<section className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
+				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+					<div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
+						<div className="text-sm text-gray-500 dark:text-gray-400">
+							<strong className="text-gray-900 dark:text-white">
+								{formatCount(userCount)}
+							</strong>{' '}
+							users
+						</div>
+						<div className="text-sm text-gray-500 dark:text-gray-400">
+							<strong className="text-gray-900 dark:text-white">
+								{formatCount(qrCount)}
+							</strong>{' '}
+							QR codes created
+						</div>
+						<div className="text-sm text-gray-500 dark:text-gray-400">
+							<strong className="text-gray-900 dark:text-white">
+								{formatCount(scanCount)}
+							</strong>{' '}
+							scans tracked
+						</div>
+					</div>
+				</div>
+			</section>
 
 			{/* QR Types Grid */}
 			<section className="py-20">

@@ -1,6 +1,7 @@
 import type {Metadata} from 'next';
-import {QrCode, Zap, Users, Globe} from 'lucide-react';
+import {QrCode, BarChart3, Users} from 'lucide-react';
 import {SITE_NAME} from '@/lib/constants';
+import {getSiteStats, formatCount} from '@/lib/stats';
 
 export const metadata: Metadata = {
 	title: `About ${SITE_NAME}`,
@@ -8,14 +9,14 @@ export const metadata: Metadata = {
 	alternates: {canonical: '/about'}
 };
 
-const stats = [
-	{icon: QrCode, label: 'QR Codes Created', value: '2M+'},
-	{icon: Users, label: 'Active Users', value: '50K+'},
-	{icon: Globe, label: 'Countries', value: '120+'},
-	{icon: Zap, label: 'Uptime', value: '99.9%'}
-];
+export default async function AboutPage() {
+	const {qrCount, userCount, scanCount} = await getSiteStats();
 
-export default function AboutPage() {
+	const stats = [
+		{icon: QrCode, label: 'QR Codes Created', value: formatCount(qrCount)},
+		{icon: Users, label: 'Users', value: formatCount(userCount)},
+		{icon: BarChart3, label: 'Scans Tracked', value: formatCount(scanCount)}
+	];
 	return (
 		<div className="py-20">
 			<div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -32,7 +33,7 @@ export default function AboutPage() {
 					</p>
 				</div>
 
-				<div className="mt-16 grid grid-cols-2 gap-8 md:grid-cols-4">
+				<div className="mt-16 grid grid-cols-3 gap-8">
 					{stats.map(stat => (
 						<div
 							key={stat.label}

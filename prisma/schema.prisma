@@ -99,6 +99,16 @@ model Scan {
   @@index([qrCodeId, scannedAt])
 }
 
+// ─── QR Generation Events (anonymous analytics) ──────
+model QRGenEvent {
+  id   String @id @default(cuid())
+  type QRType
+
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+}
+
 // ─── Contact Messages ─────────────────────────────────
 model ContactMessage {
   id      String @id @default(cuid())

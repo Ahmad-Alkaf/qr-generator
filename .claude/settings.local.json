@@ -30,7 +30,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "Bash(npm run build:*)",
       "Bash(ls:*)",
-      "Bash(find C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator/node_modules/next/dist/docs -type f -name *sitemap*)"
+      "Bash(find C:/Users/ahmad/Desktop/AHK/MyPrograms/JS/qr-generator/node_modules/next/dist/docs -type f -name *sitemap*)",
+      "Bash(git -C \"C:\\\\Users\\\\ahmad\\\\Desktop\\\\AHK\\\\MyPrograms\\\\JS\\\\qr-generator\" show a180b40 -- src/app/dashboard/page.tsx)"
     ]
   }
 }
