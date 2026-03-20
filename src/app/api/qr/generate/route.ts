@@ -48,6 +48,15 @@ export async function POST(req: Request) {
       );
     }
 
+    // Tracked QR codes are only valid for types that produce HTTP URLs
+    const TRACKABLE_TYPES = new Set(["URL", "PDF", "WHATSAPP"]);
+    if (!isDirect && !TRACKABLE_TYPES.has(type)) {
+      return NextResponse.json(
+        { error: "This QR type does not support tracked mode" },
+        { status: 400 }
+      );
+    }
+
     // Tracked QR codes require authentication
     if (!isDirect) {
       if (!userId) {
