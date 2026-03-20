@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { SITE_NAME } from "@/lib/constants";
 
 const footerLinks = {
   Product: [
@@ -28,7 +29,7 @@ export function Footer() {
           <div className="col-span-2 md:col-span-1">
             <Link href="/" className="flex items-center gap-2.5">
               <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-                <Image src="/logo/symbol.svg" alt="QRForge" width={22} height={22} />
+                <Image src="/logo/symbol.svg" alt={SITE_NAME} width={22} height={22} />
               </div>
               <span className="font-heading text-lg font-bold tracking-tight">
                 <span className="text-primary">QR</span>
@@ -64,7 +65,7 @@ export function Footer() {
 
         <div className="mt-12 border-t border-gray-200 pt-8 dark:border-gray-800">
           <p className="text-center text-sm text-gray-400 dark:text-gray-500">
-            &copy; {new Date().getFullYear()} QRForge. All rights reserved.
+            &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </p>
         </div>
       </div>

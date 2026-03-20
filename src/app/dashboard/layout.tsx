@@ -1,9 +1,10 @@
 import Link from "next/link";
 import { LayoutDashboard, QrCode, BarChart3, Settings } from "lucide-react";
 import type { Metadata } from "next";
+import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: { default: "Dashboard", template: "%s | QRForge Dashboard" },
+  title: { default: "Dashboard", template: `%s | ${SITE_NAME} Dashboard` },
   robots: { index: false, follow: false },
 };
 

@@ -1,4 +1,4 @@
-import {SITE_NAME} from '@/lib/constants';
+import {SITE_NAME, PRIVACY_EMAIL} from '@/lib/constants';
 import type {Metadata} from 'next';
 
 export const metadata: Metadata = {
@@ -179,9 +179,9 @@ export default function PrivacyPage() {
 						<p className="mt-3">
 							For privacy-related inquiries, contact us at{' '}
 							<a
-								href="mailto:privacy@qrforge.app"
+								href={`mailto:${PRIVACY_EMAIL}`}
 								className="text-primary hover:underline">
-								privacy@qrforge.app
+								{PRIVACY_EMAIL}
 							</a>
 							.
 						</p>

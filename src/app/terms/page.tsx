@@ -1,4 +1,4 @@
-import {SITE_NAME} from '@/lib/constants';
+import {SITE_NAME, LEGAL_EMAIL} from '@/lib/constants';
 import type {Metadata} from 'next';
 
 export const metadata: Metadata = {
@@ -127,9 +127,9 @@ export default function TermsPage() {
 						<p className="mt-3">
 							For questions about these Terms, contact us at{' '}
 							<a
-								href="mailto:legal@qrforge.app"
+								href={`mailto:${LEGAL_EMAIL}`}
 								className="text-primary hover:underline">
-								legal@qrforge.app
+								{LEGAL_EMAIL}
 							</a>
 							.
 						</p>

@@ -3,7 +3,7 @@ import { redirect } from "next/navigation";
 import { currentUser } from "@clerk/nextjs/server";
 import { Mail } from "lucide-react";
 import { ContactForm } from "@/components/contact/contact-form";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_NAME, SUPPORT_EMAIL } from "@/lib/constants";
 
 export const metadata: Metadata = {
   title: "Contact Us",
@@ -39,7 +39,7 @@ export default async function ContactPage() {
                 Email
               </h3>
               <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                support@qrforge.app
+                {SUPPORT_EMAIL}
               </p>
             </div>
           </div>

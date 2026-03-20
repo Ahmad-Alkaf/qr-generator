@@ -1,5 +1,9 @@
 export const SITE_NAME = "QRForge";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.qrforge.app";
+export const SUPPORT_EMAIL = "support@qrforge.app";
+export const PRIVACY_EMAIL = "privacy@qrforge.app";
+export const LEGAL_EMAIL = "legal@qrforge.app";
+
 export const SITE_DESCRIPTION =
   "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics. No signup required.";
 

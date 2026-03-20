@@ -10,7 +10,6 @@ import {
 	BarChart3,
 	Shield,
 	ArrowRight,
-	Star,
 	ChevronDown
 } from 'lucide-react';
 import Link from 'next/link';
@@ -83,23 +82,6 @@ const features = [
 	}
 ];
 
-const testimonials = [
-	{
-		name: 'Sarah Chen',
-		role: 'Marketing Director',
-		text: `${SITE_NAME} replaced three different tools we were using. The analytics on tracked QR codes are incredibly detailed.`
-	},
-	{
-		name: 'Marcus Johnson',
-		role: 'Restaurant Owner',
-		text: 'We use direct QR codes for our menu — customers scan instantly without any redirect delay. Brilliant!'
-	},
-	{
-		name: 'Emily Rodriguez',
-		role: 'Event Planner',
-		text: 'The ability to choose between direct and tracked QR codes is a game-changer for our events.'
-	}
-];
 
 const faqs = [
 	{
@@ -145,11 +127,6 @@ export default function HomePage() {
 			price: '0',
 			priceCurrency: 'USD'
 		},
-		aggregateRating: {
-			'@type': 'AggregateRating',
-			ratingValue: '4.8',
-			ratingCount: '1200'
-		}
 	};
 
 	const faqJsonLd = {
@@ -205,37 +182,6 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* Social Proof */}
-			<section className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
-				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-					<div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
-						<div className="flex items-center gap-1">
-							{[...Array(5)].map((_, i) => (
-								<Star
-									key={i}
-									className="h-5 w-5 fill-yellow-400 text-yellow-400"
-								/>
-							))}
-							<span className="ml-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-								4.8/5 rating
-							</span>
-						</div>
-						<div className="text-sm text-gray-500 dark:text-gray-400">
-							Trusted by{' '}
-							<strong className="text-gray-900 dark:text-white">
-								50,000+
-							</strong>{' '}
-							users
-						</div>
-						<div className="text-sm text-gray-500 dark:text-gray-400">
-							<strong className="text-gray-900 dark:text-white">
-								2M+
-							</strong>{' '}
-							QR codes created
-						</div>
-					</div>
-				</div>
-			</section>
 
 			{/* QR Types Grid */}
 			<section className="py-20">
@@ -374,43 +320,6 @@ export default function HomePage() {
 				</div>
 			</section>
 
-			{/* Testimonials */}
-			<section className="py-20">
-				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-					<div className="text-center">
-						<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
-							Loved by Thousands
-						</h2>
-					</div>
-					<div className="mt-12 grid gap-8 md:grid-cols-3">
-						{testimonials.map(t => (
-							<div
-								key={t.name}
-								className="rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-								<div className="flex gap-1">
-									{[...Array(5)].map((_, i) => (
-										<Star
-											key={i}
-											className="h-4 w-4 fill-yellow-400 text-yellow-400"
-										/>
-									))}
-								</div>
-								<p className="mt-4 text-sm leading-relaxed text-gray-600 dark:text-gray-400">
-									&ldquo;{t.text}&rdquo;
-								</p>
-								<div className="mt-4">
-									<p className="text-sm font-semibold text-gray-900 dark:text-white">
-										{t.name}
-									</p>
-									<p className="text-xs text-gray-500 dark:text-gray-400">
-										{t.role}
-									</p>
-								</div>
-							</div>
-						))}
-					</div>
-				</div>
-			</section>
 
 			{/* FAQ */}
 			<section className="bg-gray-50 py-20 dark:bg-gray-900/50">
@@ -447,7 +356,7 @@ export default function HomePage() {
 						Ready to Create Your QR Code?
 					</h2>
 					<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-						Join 50,000+ users. Start for free — no signup required.
+						Start creating QR codes — it&apos;s free.
 					</p>
 					<Link
 						href="/#generator"
