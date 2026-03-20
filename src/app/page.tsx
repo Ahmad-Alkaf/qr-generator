@@ -4,7 +4,9 @@ import {
 	Contact,
 	Mail,
 	MessageSquare,
+	MessageCircle,
 	FileText,
+	Type,
 	Zap,
 	Palette,
 	BarChart3,
@@ -49,10 +51,22 @@ const qrTypes = [
 		description: 'Send text messages'
 	},
 	{
+		icon: MessageCircle,
+		label: 'WhatsApp',
+		slug: 'whatsapp',
+		description: 'Open a WhatsApp chat'
+	},
+	{
 		icon: FileText,
 		label: 'PDF',
 		slug: 'pdf',
 		description: 'Link to documents'
+	},
+	{
+		icon: Type,
+		label: 'Plain Text',
+		slug: 'plain-text',
+		description: 'Encode any text'
 	}
 ];
 
@@ -223,7 +237,7 @@ export default async function HomePage() {
 							more
 						</p>
 					</div>
-					<div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-6">
+					<div className="mt-12 grid grid-cols-2 gap-4 sm:grid-cols-4 lg:grid-cols-4">
 						{qrTypes.map(qr => (
 							<Link
 								key={qr.slug}
