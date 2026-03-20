@@ -66,7 +66,7 @@ export default function PrivacyPage() {
 							</li>
 							<li>
 								To send transactional emails (account
-								verification, receipts)
+								verification)
 							</li>
 							<li>
 								To improve the Service and develop new features
