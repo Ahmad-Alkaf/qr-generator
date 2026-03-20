@@ -13,7 +13,7 @@ const features = [
   {
     icon: Palette,
     title: "Full Customization",
-    description: "Colors, logos, and dot styles to match your brand",
+    description: "Colors and dot styles to match your brand",
   },
   {
     icon: BarChart3,

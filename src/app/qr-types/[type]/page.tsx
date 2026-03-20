@@ -126,7 +126,7 @@ const QR_TYPE_PAGES: Record<
       },
       {
         q: "What phone number format should I use?",
-        a: "Use the international format without any dashes or plus signs (e.g., 12025551234 for a US number).",
+        a: "Include your country code (e.g., +1 for US, +44 for UK). Dashes and spaces are stripped automatically.",
       },
     ],
   },

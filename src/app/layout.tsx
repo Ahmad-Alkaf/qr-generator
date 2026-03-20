@@ -5,6 +5,7 @@ import { dark } from "@clerk/ui/themes";
 import "./globals.css";
 import { Header } from "@/components/layout/header";
 import { Footer } from "@/components/layout/footer";
+import { SITE_NAME, SITE_URL } from "@/lib/constants";
 
 const outfit = Outfit({
   variable: "--font-outfit",
@@ -20,18 +21,17 @@ const fraunces = Fraunces({
 
 export const metadata: Metadata = {
   metadataBase: new URL(
-    process.env.NEXT_PUBLIC_SITE_URL || "https://www.qrforge.app"
-  ),
+SITE_URL  ),
   title: {
-    default: "Free QR Code Generator — Create Custom QR Codes Instantly | QRForge",
-    template: "%s | QRForge",
+    default: `Free QR Code Generator — Create Custom QR Codes Instantly | ${SITE_NAME}`,
+    template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Create free QR codes for URLs, Wi-Fi, vCards, and more. Add your logo, customize colors, and track scans with analytics. No signup required.",
+    "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics. No signup required.",
   keywords: [
     "QR code generator",
     "create QR code",
-    "QR code with logo",
+    "custom QR code",
     "free QR code",
     "dynamic QR code",
     "QR code maker",
@@ -39,10 +39,10 @@ export const metadata: Metadata = {
   openGraph: {
     type: "website",
     locale: "en_US",
-    siteName: "QRForge",
+    siteName: SITE_NAME,
     title: "Free QR Code Generator — Create Custom QR Codes Instantly",
     description:
-      "Create, customize, and track QR codes. Free forever for basic use.",
+      "Create, customize, and track QR codes. 100% free for everyone.",
     images: [{ url: "/og-image.png", width: 1200, height: 630 }],
   },
   twitter: {

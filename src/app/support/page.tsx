@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { Heart, ArrowRight } from "lucide-react";
+import { SITE_NAME } from "@/lib/constants";
 
 export const metadata: Metadata = {
-  title: "Support QRForge",
+  title: `Support ${SITE_NAME}`,
   description:
-    "QRForge is free for everyone. Support the project to help keep it running.",
+    `${SITE_NAME} is free for everyone. Support the project to help keep it running.`,
   alternates: { canonical: "/support" },
 };
 
@@ -18,31 +19,29 @@ export default function SupportPage() {
         </div>
 
         <h1 className="mt-6 font-heading text-4xl font-extrabold text-gray-900 dark:text-white">
-          Support QRForge
+          Support {SITE_NAME}
         </h1>
 
         <p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
-          QRForge is completely free with all features unlocked — no paywalls, no
-          limits. If you find it useful, consider supporting the project to help
-          cover hosting costs and fund new features.
+          {SITE_NAME} is free to use — no paywalls. If you find it useful, consider
+          supporting the project to help cover hosting costs and fund new features.
         </p>
 
         <div className="mt-10 rounded-2xl border border-gray-200 bg-white p-8 text-left dark:border-gray-800 dark:bg-gray-900">
           <h2 className="font-heading text-xl font-bold text-gray-900 dark:text-white">
-            What you get for free
+            What you get
           </h2>
           <ul className="mt-4 space-y-3 text-sm text-gray-600 dark:text-gray-400">
-            <li>Unlimited QR codes — all 8 types</li>
-            <li>PNG, SVG, and PDF downloads</li>
-            <li>Full color customization and frame styles</li>
+            <li>URL QR codes without an account</li>
+            <li>All 8 QR types with a free account</li>
+            <li>PNG downloads (SVG and PDF with sign-in)</li>
+            <li>Full color customization</li>
             <li>Tracked QR codes with scan analytics</li>
-            <li>No watermark, no signup required for basic use</li>
           </ul>
         </div>
 
         <p className="mt-8 text-sm text-gray-500 dark:text-gray-400">
-          A payment portal is coming soon. In the meantime, sharing QRForge with
-          others is the best way to support me!
+          Sharing {SITE_NAME} with others is the best way to support me!
         </p>
 
         <Link
