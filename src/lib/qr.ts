@@ -64,9 +64,9 @@ export function buildQRData(type: QRTypeValue, content: string): string {
           `FN:${firstName} ${lastName}`,
           parsed.org ? `ORG:${escapeVCard(parsed.org)}` : "",
           parsed.title ? `TITLE:${escapeVCard(parsed.title)}` : "",
-          parsed.phone ? `TEL:${escapeVCard(parsed.phone)}` : "",
-          parsed.email ? `EMAIL:${escapeVCard(parsed.email)}` : "",
-          parsed.url ? `URL:${escapeVCard(parsed.url)}` : "",
+          parsed.phone ? `TEL:${parsed.phone}` : "",
+          parsed.email ? `EMAIL:${parsed.email}` : "",
+          parsed.url ? `URL:${parsed.url}` : "",
           parsed.address ? `ADR:;;${escapeVCard(parsed.address)}` : "",
           "END:VCARD",
         ]

@@ -61,7 +61,7 @@ export default async function DashboardPage() {
       </h1>
 
       {/* Stats */}
-      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-4">
+      <div className="mt-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
         {stats.map((stat) => (
           <div
             key={stat.label}
