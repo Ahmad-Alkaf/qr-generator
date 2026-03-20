@@ -175,7 +175,7 @@ export default async function HomePage() {
 					<div className="text-center">
 						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-50 px-4 py-1.5 text-sm font-medium text-primary dark:border-primary/30 dark:bg-primary/10">
 							<Zap className="h-3.5 w-3.5" />
-							100% Free — All Features Unlocked
+							100% Free — No Credit Card Required
 						</div>
 						<h1 className="font-heading text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white">
 							Create QR Codes
