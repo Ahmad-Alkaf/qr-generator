@@ -4,11 +4,20 @@ import { z } from "zod";
 import { qrGenerateSchema, buildQRData } from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
 import { generateShortCode } from "@/lib/shortcode";
+import { checkRateLimit } from "@/lib/rate-limit";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
 
 export async function POST(req: Request) {
   try {
+    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "anonymous";
+    const { success } = await checkRateLimit(ip);
+    if (!success) {
+      return NextResponse.json(
+        { error: "Too many requests. Please try again later." },
+        { status: 429 }
+      );
+    }
     const body = await req.json();
     const parsed = qrGenerateSchema.safeParse(body);
 
