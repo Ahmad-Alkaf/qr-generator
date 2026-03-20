@@ -27,7 +27,7 @@ SITE_URL  ),
     template: `%s | ${SITE_NAME}`,
   },
   description:
-    "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics. No signup required.",
+    "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.",
   keywords: [
     "QR code generator",
     "create QR code",

@@ -5,7 +5,7 @@ export const PRIVACY_EMAIL = "privacy@qrforge.app";
 export const LEGAL_EMAIL = "legal@qrforge.app";
 
 export const SITE_DESCRIPTION =
-  "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics. No signup required.";
+  "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.";
 
 export const QR_TYPE_INFO = {
   URL: {
