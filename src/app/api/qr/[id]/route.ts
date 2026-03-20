@@ -82,6 +82,13 @@ export async function PATCH(
     );
   }
 
+  if (parsed.data.destinationUrl && qrCode.isDirect) {
+    return NextResponse.json(
+      { error: "Cannot set destination URL on a Direct QR code" },
+      { status: 400 }
+    );
+  }
+
   const updated = await prisma.qRCode.update({
     where: { id },
     data: {
