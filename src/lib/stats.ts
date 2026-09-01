@@ -1,13 +1,28 @@
 import { prisma } from "./prisma";
 
-export async function getSiteStats() {
-  const [qrCount, userCount, scanCount] = await Promise.all([
-    prisma.qRGenEvent.count(),
-    prisma.user.count(),
-    prisma.scan.count(),
-  ]);
+export interface SiteStats {
+  qrCount: number;
+  userCount: number;
+  scanCount: number;
+}
 
-  return { qrCount, userCount, scanCount };
+/**
+ * Site-wide counters shown on the home and about pages.
+ * Returns null when the database is unreachable so a DB outage
+ * (or a build without DATABASE_URL) never breaks page rendering.
+ */
+export async function getSiteStats(): Promise<SiteStats | null> {
+  try {
+    const [qrCount, userCount, scanCount] = await Promise.all([
+      prisma.qRGenEvent.count(),
+      prisma.user.count(),
+      prisma.scan.count(),
+    ]);
+    return { qrCount, userCount, scanCount };
+  } catch (error) {
+    console.error("Site stats unavailable:", error);
+    return null;
+  }
 }
 
 export function formatCount(n: number): string {

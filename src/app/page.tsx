@@ -129,8 +129,12 @@ const faqs = [
 	}
 ];
 
+// Refresh the prerendered page periodically so the stats do not stay
+// frozen at build time.
+export const revalidate = 1800;
+
 export default async function HomePage() {
-	const {qrCount, userCount, scanCount} = await getSiteStats();
+	const stats = await getSiteStats();
 	const jsonLd = {
 		'@context': 'https://schema.org',
 		'@type': 'WebApplication',
@@ -199,31 +203,33 @@ export default async function HomePage() {
 			</section>
 
 
-			{/* Stats */}
-			<section className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
-				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-					<div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
-						<div className="text-sm text-gray-500 dark:text-gray-400">
-							<strong className="text-gray-900 dark:text-white">
-								{formatCount(userCount)}
-							</strong>{' '}
-							users
-						</div>
-						<div className="text-sm text-gray-500 dark:text-gray-400">
-							<strong className="text-gray-900 dark:text-white">
-								{formatCount(qrCount)}
-							</strong>{' '}
-							QR codes created
-						</div>
-						<div className="text-sm text-gray-500 dark:text-gray-400">
-							<strong className="text-gray-900 dark:text-white">
-								{formatCount(scanCount)}
-							</strong>{' '}
-							scans tracked
+			{/* Stats (hidden when the database is unavailable) */}
+			{stats && (
+				<section className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
+					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+						<div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
+							<div className="text-sm text-gray-500 dark:text-gray-400">
+								<strong className="text-gray-900 dark:text-white">
+									{formatCount(stats.userCount)}
+								</strong>{' '}
+								users
+							</div>
+							<div className="text-sm text-gray-500 dark:text-gray-400">
+								<strong className="text-gray-900 dark:text-white">
+									{formatCount(stats.qrCount)}
+								</strong>{' '}
+								QR codes created
+							</div>
+							<div className="text-sm text-gray-500 dark:text-gray-400">
+								<strong className="text-gray-900 dark:text-white">
+									{formatCount(stats.scanCount)}
+								</strong>{' '}
+								scans tracked
+							</div>
 						</div>
 					</div>
-				</div>
-			</section>
+				</section>
+			)}
 
 			{/* QR Types Grid */}
 			<section className="py-20">

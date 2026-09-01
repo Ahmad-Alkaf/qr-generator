@@ -4,6 +4,11 @@ export const SUPPORT_EMAIL = "support@qrforge.app";
 export const PRIVACY_EMAIL = "privacy@qrforge.app";
 export const LEGAL_EMAIL = "legal@qrforge.app";
 
+// KafLabs LLC is the parent brand. Product footers link to the shared legal pages.
+export const KAFLABS_URL = "https://kaflabs.com";
+export const KAFLABS_PRIVACY_URL = "https://kaflabs.com/privacy.html";
+export const KAFLABS_TERMS_URL = "https://kaflabs.com/terms.html";
+
 export const SITE_DESCRIPTION =
   "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.";
 

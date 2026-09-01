@@ -9,14 +9,20 @@ export const metadata: Metadata = {
 	alternates: {canonical: '/about'}
 };
 
-export default async function AboutPage() {
-	const {qrCount, userCount, scanCount} = await getSiteStats();
+// Refresh the prerendered page periodically so the stats do not stay
+// frozen at build time.
+export const revalidate = 1800;
 
-	const stats = [
-		{icon: QrCode, label: 'QR Codes Created', value: formatCount(qrCount)},
-		{icon: Users, label: 'Users', value: formatCount(userCount)},
-		{icon: BarChart3, label: 'Scans Tracked', value: formatCount(scanCount)}
-	];
+export default async function AboutPage() {
+	const siteStats = await getSiteStats();
+
+	const stats = siteStats
+		? [
+				{icon: QrCode, label: 'QR Codes Created', value: formatCount(siteStats.qrCount)},
+				{icon: Users, label: 'Users', value: formatCount(siteStats.userCount)},
+				{icon: BarChart3, label: 'Scans Tracked', value: formatCount(siteStats.scanCount)}
+			]
+		: [];
 	return (
 		<div className="py-20">
 			<div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
@@ -33,21 +39,23 @@ export default async function AboutPage() {
 					</p>
 				</div>
 
-				<div className="mt-16 grid grid-cols-3 gap-8">
-					{stats.map(stat => (
-						<div
-							key={stat.label}
-							className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 text-center dark:border-gray-800 dark:bg-gray-900">
-							<stat.icon className="h-8 w-8 text-primary" />
-							<p className="mt-3 text-2xl font-bold text-gray-900 dark:text-white">
-								{stat.value}
-							</p>
-							<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-								{stat.label}
-							</p>
-						</div>
-					))}
-				</div>
+				{stats.length > 0 && (
+					<div className="mt-16 grid grid-cols-3 gap-8">
+						{stats.map(stat => (
+							<div
+								key={stat.label}
+								className="flex flex-col items-center rounded-2xl border border-gray-200 bg-white p-6 text-center dark:border-gray-800 dark:bg-gray-900">
+								<stat.icon className="h-8 w-8 text-primary" />
+								<p className="mt-3 text-2xl font-bold text-gray-900 dark:text-white">
+									{stat.value}
+								</p>
+								<p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
+									{stat.label}
+								</p>
+							</div>
+						))}
+					</div>
+				)}
 
 				<div className="mt-16 space-y-8 text-gray-600 dark:text-gray-400">
 					<div>

@@ -1,4 +1,4 @@
-import {SITE_NAME, LEGAL_EMAIL} from '@/lib/constants';
+import {SITE_NAME, LEGAL_EMAIL, KAFLABS_TERMS_URL} from '@/lib/constants';
 import type {Metadata} from 'next';
 
 export const metadata: Metadata = {
@@ -16,6 +16,18 @@ export default function TermsPage() {
 				</h1>
 				<p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
 					Last updated: March 19, 2026
+				</p>
+				<p className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
+					{SITE_NAME} is a product of KafLabs LLC. These terms are a
+					product-specific supplement to the{' '}
+					<a
+						href={KAFLABS_TERMS_URL}
+						target="_blank"
+						rel="noopener"
+						className="text-primary hover:underline">
+						KafLabs Terms of Service
+					</a>
+					, which apply to all KafLabs products.
 				</p>
 
 				<div className="mt-10 space-y-8 text-sm leading-relaxed text-gray-600 dark:text-gray-400">

@@ -1,3 +1,5 @@
+Shared organization rules, product list, and shell rules are in the parent `../CLAUDE.md` (the `kaflabs-org` folder).
+
 ## Architecture
 
 **QRForge** — a free QR code generator built with Next.js 16, React 19, Tailwind CSS 4, Clerk auth, and Prisma (PostgreSQL via `@prisma/adapter-pg`).

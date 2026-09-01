@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { SITE_NAME } from "@/lib/constants";
+import { SITE_NAME, KAFLABS_URL, KAFLABS_PRIVACY_URL, KAFLABS_TERMS_URL } from "@/lib/constants";
 
 const footerLinks = {
   Product: [
@@ -14,11 +14,15 @@ const footerLinks = {
     { href: "/contact", label: "Contact" },
     { href: "/support", label: "Support Me" },
   ],
-  Legal: [
-    { href: "/privacy", label: "Privacy Policy" },
-    { href: "/terms", label: "Terms of Service" },
-  ],
 };
+
+const legalLinks = [
+  { href: KAFLABS_PRIVACY_URL, label: "Privacy Policy" },
+  { href: KAFLABS_TERMS_URL, label: "Terms of Service" },
+];
+
+const linkClass =
+  "text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white";
 
 export function Footer() {
   return (
@@ -39,9 +43,21 @@ export function Footer() {
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               Create, customize, and track QR codes. Free for everyone.
             </p>
+            <p className="mt-4 text-xs text-gray-500 dark:text-gray-400">
+              A{" "}
+              <a
+                href={KAFLABS_URL}
+                target="_blank"
+                rel="noopener"
+                className="underline decoration-gray-400/40 underline-offset-2 transition-colors hover:text-gray-900 dark:hover:text-white"
+              >
+                KafLabs
+              </a>{" "}
+              product
+            </p>
           </div>
 
-          {/* Links */}
+          {/* Internal links */}
           {Object.entries(footerLinks).map(([category, links]) => (
             <div key={category}>
               <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
@@ -50,10 +66,7 @@ export function Footer() {
               <ul className="mt-4 space-y-3">
                 {links.map((link) => (
                   <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-gray-500 transition-colors hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                    >
+                    <Link href={link.href} className={linkClass}>
                       {link.label}
                     </Link>
                   </li>
@@ -61,11 +74,41 @@ export function Footer() {
               </ul>
             </div>
           ))}
+
+          {/* Legal (shared KafLabs pages) */}
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900 dark:text-white">
+              Legal
+            </h3>
+            <ul className="mt-4 space-y-3">
+              {legalLinks.map((link) => (
+                <li key={link.href}>
+                  <a
+                    href={link.href}
+                    target="_blank"
+                    rel="noopener"
+                    className={linkClass}
+                  >
+                    {link.label}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          </div>
         </div>
 
         <div className="mt-12 border-t border-gray-200 pt-8 dark:border-gray-800">
           <p className="text-center text-sm text-gray-400 dark:text-gray-500">
-            &copy; {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
+            &copy; {new Date().getFullYear()}{" "}
+            <a
+              href={KAFLABS_URL}
+              target="_blank"
+              rel="noopener"
+              className="transition-colors hover:text-gray-900 dark:hover:text-white"
+            >
+              KafLabs LLC
+            </a>
+            . All rights reserved.
           </p>
         </div>
       </div>
