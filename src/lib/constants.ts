@@ -1,8 +1,9 @@
 export const SITE_NAME = "QRForge";
 export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.qrforge.app";
-export const SUPPORT_EMAIL = "support@qrforge.app";
-export const PRIVACY_EMAIL = "privacy@qrforge.app";
-export const LEGAL_EMAIL = "legal@qrforge.app";
+// All KafLabs products share the kaflabs.com contact addresses.
+export const SUPPORT_EMAIL = "support@kaflabs.com";
+export const PRIVACY_EMAIL = "privacy@kaflabs.com";
+export const LEGAL_EMAIL = "legal@kaflabs.com";
 
 // KafLabs is the parent brand. Product footers link to the shared legal pages.
 export const KAFLABS_URL = "https://kaflabs.com";
