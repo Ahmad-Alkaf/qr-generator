@@ -18,7 +18,7 @@ export default function PrivacyPage() {
 					Last updated: March 19, 2026
 				</p>
 				<p className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-					{SITE_NAME} is a product of KafLabs LLC. This page is a
+					{SITE_NAME} is a product of KafLabs. This page is a
 					product-specific supplement to the{' '}
 					<a
 						href={KAFLABS_PRIVACY_URL}

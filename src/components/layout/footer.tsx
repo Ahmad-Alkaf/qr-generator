@@ -106,7 +106,7 @@ export function Footer() {
               rel="noopener"
               className="transition-colors hover:text-gray-900 dark:hover:text-white"
             >
-              KafLabs LLC
+              KafLabs
             </a>
             . All rights reserved.
           </p>

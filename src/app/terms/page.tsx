@@ -18,7 +18,7 @@ export default function TermsPage() {
 					Last updated: March 19, 2026
 				</p>
 				<p className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
-					{SITE_NAME} is a product of KafLabs LLC. These terms are a
+					{SITE_NAME} is a product of KafLabs. These terms are a
 					product-specific supplement to the{' '}
 					<a
 						href={KAFLABS_TERMS_URL}
