@@ -37,6 +37,7 @@ See `.env.example`. `NEXT_PUBLIC_*` values are inlined into the client bundle at
 | `NEXT_PUBLIC_SITE_URL` | build | Canonical origin, for example `https://qrforge.app`. Tracked QR codes embed it forever. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | build | Clerk production instance |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. | build | `/sign-in`, `/sign-up`, `/dashboard`, `/dashboard` |
+| `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | build | Optional. Google Search Console HTML-tag verification token. Leave empty to skip the meta tag. |
 | `DATABASE_URL` | run | PostgreSQL connection string |
 | `CLERK_SECRET_KEY` | run | Clerk production instance |
 | `CLERK_WEBHOOK_SECRET` | run | Clerk webhook endpoint `/api/webhooks/clerk` (events `user.created`, `user.updated`, `user.deleted`) |

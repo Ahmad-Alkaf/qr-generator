@@ -9,7 +9,7 @@ import {cn} from '@/lib/utils';
 import {SITE_NAME} from '@/lib/constants';
 
 const navLinks = [
-	{href: '/qr-types/url', label: 'QR Types'},
+	{href: '/qr-types', label: 'QR Types'},
 	{href: '/support', label: 'Support Me'},
 	{href: '/about', label: 'About'},
 	{href: '/contact', label: 'Contact'}

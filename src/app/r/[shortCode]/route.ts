@@ -15,7 +15,11 @@ h1{font-size:1.5rem;margin:0 0 8px}p{color:#9ca3af;margin:0 0 20px}a{color:#C45B
 <body><div><h1>This QR code is no longer active</h1><p>The link behind it was removed or never existed.</p><a href="${SITE_URL}">Create your own QR code with ${SITE_NAME}</a></div></body></html>`;
   return new NextResponse(html, {
     status: 404,
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+    headers: {
+      "Content-Type": "text/html; charset=utf-8",
+      "Cache-Control": "no-store",
+      "X-Robots-Tag": "noindex, nofollow",
+    },
   });
 }
 
@@ -42,7 +46,9 @@ export async function GET(
 
   return NextResponse.redirect(dest, {
     status: 302,
-    headers: { "Cache-Control": "no-store" },
+    // Short links are private redirects. Keep them and their destinations out
+    // of search results under our domain.
+    headers: { "Cache-Control": "no-store", "X-Robots-Tag": "noindex, nofollow" },
   });
 }
 

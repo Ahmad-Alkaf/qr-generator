@@ -10,6 +10,8 @@ export const metadata: Metadata = {
   description:
     `Get in touch with the ${SITE_NAME} team. We're here to help with questions about QR code generation and support.`,
   alternates: { canonical: "/contact" },
+  // The page redirects signed-out visitors (and crawlers) to /sign-in.
+  robots: { index: false, follow: true },
 };
 
 export default async function ContactPage() {

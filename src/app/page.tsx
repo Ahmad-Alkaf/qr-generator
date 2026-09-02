@@ -16,8 +16,16 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import {QRGenerator} from '@/components/qr/qr-generator';
-import {SITE_NAME, SITE_URL} from '@/lib/constants';
+import {JsonLd} from '@/components/seo/json-ld';
+import {SITE_NAME} from '@/lib/constants';
 import {getSiteStats, formatCount} from '@/lib/stats';
+import {
+	faqJsonLd,
+	howToJsonLd,
+	jsonLdGraph,
+	webApplicationJsonLd,
+	webPageJsonLd
+} from '@/lib/seo';
 
 const qrTypes = [
 	{
@@ -97,35 +105,96 @@ const features = [
 	}
 ];
 
+const howItWorks = [
+	{
+		step: '1',
+		title: 'Choose Your Type',
+		description:
+			'Select what kind of QR code you need: URL, Wi-Fi, vCard, Email, SMS, WhatsApp, PDF, or Plain Text.'
+	},
+	{
+		step: '2',
+		title: 'Customize & Choose Mode',
+		description:
+			'Set colors and dot style. Pick Direct mode for speed or Tracked mode for scan analytics and an editable destination.'
+	},
+	{
+		step: '3',
+		title: 'Download & Share',
+		description:
+			'Download your QR code as PNG, SVG, or PDF. Print it or share it digitally.'
+	}
+];
+
+const comparison = [
+	{
+		feature: 'Where the content lives',
+		direct: 'Inside the QR image',
+		tracked: 'On a short QRForge redirect link'
+	},
+	{
+		feature: 'Scan speed',
+		direct: 'Instant, no redirect',
+		tracked: 'One quick redirect'
+	},
+	{
+		feature: 'Scan analytics',
+		direct: 'No',
+		tracked: 'Country, city, device, browser, time'
+	},
+	{
+		feature: 'Edit destination after printing',
+		direct: 'No',
+		tracked: 'Yes, any time'
+	},
+	{
+		feature: 'Works offline when scanned',
+		direct: 'Yes, for Wi-Fi, vCard, and text',
+		tracked: 'Needs internet'
+	},
+	{
+		feature: 'Account required',
+		direct: 'No for URL, yes for other types',
+		tracked: 'Yes, free'
+	}
+];
 
 const faqs = [
 	{
 		q: 'What is the difference between Direct and Tracked QR codes?',
-		a: "Direct QR codes encode your content directly — they're faster to scan because there's no redirect. Tracked QR codes go through our redirect server, which lets us collect scan analytics (location, device, time) and lets you edit the destination URL after printing."
+		a: 'Direct QR codes store your content in the image itself, so scanning opens it instantly with no redirect. Tracked QR codes store a short QRForge redirect link. The redirect lets QRForge count scans, record location, device, and time, and lets you change the destination URL after the code is printed.'
 	},
 	{
 		q: `Is ${SITE_NAME} really free?`,
-		a: `Yes! ${SITE_NAME} is free to use. URL QR codes work without an account. Sign in to unlock all 8 QR types and SVG/PDF downloads.`
+		a: `Yes. ${SITE_NAME} is free to use with no watermark. URL QR codes and PNG downloads work without an account. A free account unlocks all 8 QR types, SVG and PDF downloads, Tracked mode, and the analytics dashboard.`
 	},
 	{
 		q: 'Can I customize my QR code with colors?',
-		a: 'Yes! You can customize foreground and background colors for all QR codes.'
+		a: 'Yes. You can set the foreground and background colors and choose dot, corner square, and corner dot styles for every QR code.'
 	},
 	{
 		q: 'What QR code types are supported?',
-		a: 'We support URL, Wi-Fi, vCard (contact), Email, SMS, WhatsApp, PDF, and Plain Text QR codes. URL is available without an account; sign in to access all other types.'
+		a: `${SITE_NAME} supports 8 types: URL, Wi-Fi, vCard (contact), Email, SMS, WhatsApp, PDF, and Plain Text. URL is available without an account. Sign in to use the other types.`
 	},
 	{
 		q: 'Can I edit a QR code after printing it?',
-		a: 'Yes — if you create a Tracked QR code, you can change the destination URL at any time without reprinting the physical QR code. Just sign in to use Tracked mode.'
+		a: 'Yes, if you create a Tracked QR code. You can change the destination URL at any time from the dashboard, and the printed code keeps working.'
 	},
 	{
 		q: 'How do scan analytics work?',
-		a: "When someone scans a Tracked QR code, they are briefly redirected through our server, which records the scan event including country, city, device type, browser, and timestamp. Direct QR codes do not have analytics since they don't redirect."
+		a: 'When someone scans a Tracked QR code, the phone opens a short QRForge link that redirects to your destination. QRForge records the scan with country, city, device type, operating system, browser, and timestamp, and shows the results in your dashboard. Direct QR codes do not have analytics because they do not redirect.'
+	},
+	{
+		q: 'Which download formats are available?',
+		a: 'PNG, SVG, and PDF. PNG is available to everyone. SVG and PDF require a free account. All three files are generated in your browser.'
 	},
 	{
 		q: 'What does Error Correction do?',
-		a: 'QR codes have built-in error correction that lets them scan even when partially damaged or obscured. Low (7%), Medium (15%), Quartile (25%), and High (30%) indicate how much of the code can be lost and still work. Higher levels make the QR denser but more resilient — use High if you plan to add a logo overlay. Note: for short content, lower levels may look identical because the QR encoder automatically upgrades the error correction when there is spare capacity in the grid.'
+		a: 'QR codes have built-in error correction that lets them scan even when partially damaged or covered. Low recovers 7%, Medium 15%, Quartile 25%, and High 30% of the code. Higher levels make the QR code denser but more robust. Use High if you plan to place a logo on top. For short content, lower levels can look identical because the encoder upgrades the error correction when there is spare capacity.'
+	},
+	{
+		q: `Does ${SITE_NAME} add a watermark or expire QR codes?`,
+		a: `No. ${SITE_NAME} never adds a watermark. Direct QR codes never expire because the content is inside the image. Tracked QR codes keep working as long as they exist in your dashboard.`
 	}
 ];
 
@@ -135,63 +204,52 @@ export const revalidate = 1800;
 
 export default async function HomePage() {
 	const stats = await getSiteStats();
-	const jsonLd = {
-		'@context': 'https://schema.org',
-		'@type': 'WebApplication',
-		name: SITE_NAME,
-		url: SITE_URL,
-		applicationCategory: 'UtilityApplication',
-		operatingSystem: 'Any',
-		offers: {
-			'@type': 'Offer',
-			price: '0',
-			priceCurrency: 'USD'
-		},
-	};
 
-	const faqJsonLd = {
-		'@context': 'https://schema.org',
-		'@type': 'FAQPage',
-		mainEntity: faqs.map(faq => ({
-			'@type': 'Question',
-			name: faq.q,
-			acceptedAnswer: {
-				'@type': 'Answer',
-				text: faq.a
-			}
-		}))
-	};
+	const jsonLd = jsonLdGraph(
+		webPageJsonLd({
+			path: '/',
+			name: `${SITE_NAME}: Free QR Code Generator`,
+			description:
+				'Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.'
+		}),
+		webApplicationJsonLd(),
+		howToJsonLd(
+			`How to create a QR code with ${SITE_NAME}`,
+			howItWorks.map(step => `${step.title}. ${step.description}`),
+			'Create a free custom QR code in three steps.'
+		),
+		faqJsonLd(faqs)
+	);
 
 	return (
 		<>
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{__html: JSON.stringify(jsonLd)}}
-			/>
-			<script
-				type="application/ld+json"
-				dangerouslySetInnerHTML={{__html: JSON.stringify(faqJsonLd)}}
-			/>
+			<JsonLd data={jsonLd} />
 
 			{/* Hero Section */}
-			<section className="relative overflow-hidden bg-linear-to-br from-primary-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
+			<section
+				aria-labelledby="hero-heading"
+				className="relative overflow-hidden bg-linear-to-br from-primary-50 via-white to-indigo-50 dark:from-gray-950 dark:via-gray-900 dark:to-gray-950">
 				<div className="relative mx-auto max-w-7xl px-4 pb-16 pt-20 sm:px-6 sm:pb-24 sm:pt-28 lg:px-8">
 					<div className="text-center">
 						<div className="mb-6 inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary-50 px-4 py-1.5 text-sm font-medium text-primary dark:border-primary/30 dark:bg-primary/10">
 							<Zap className="h-3.5 w-3.5" />
 							100% Free — No Credit Card Required
 						</div>
-						<h1 className="font-heading text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white">
-							Create QR Codes
+						<h1
+							id="hero-heading"
+							className="font-heading text-4xl font-extrabold tracking-tight text-gray-900 sm:text-5xl md:text-6xl dark:text-white">
+							Free QR Code Generator
 							<br />
-							<span className="text-primary">in Seconds</span>
+							<span className="text-primary">
+								Create Custom QR Codes in Seconds
+							</span>
 						</h1>
 						<p className="mx-auto mt-6 max-w-2xl text-lg text-gray-600 dark:text-gray-400">
 							Generate free QR codes for URLs, Wi-Fi, vCards, and
 							more. Choose <strong>Direct</strong> for instant
 							scans or <strong>Tracked</strong> for scan
-							analytics. Customize colors, download in high
-							quality.
+							analytics. Customize colors and download as PNG,
+							SVG, or PDF.
 						</p>
 					</div>
 
@@ -202,10 +260,11 @@ export default async function HomePage() {
 				</div>
 			</section>
 
-
 			{/* Stats (hidden when the database is unavailable) */}
 			{stats && (
-				<section className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
+				<section
+					aria-label="Usage statistics"
+					className="border-y border-gray-200 bg-white py-8 dark:border-gray-800 dark:bg-gray-950">
 					<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 						<div className="flex flex-col items-center justify-center gap-6 sm:flex-row sm:gap-12">
 							<div className="text-sm text-gray-500 dark:text-gray-400">
@@ -231,11 +290,36 @@ export default async function HomePage() {
 				</section>
 			)}
 
+			{/* What is QRForge (entity definition for search and AI answers) */}
+			<section
+				aria-labelledby="what-is-heading"
+				className="py-16">
+				<div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
+					<h2
+						id="what-is-heading"
+						className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+						What is {SITE_NAME}?
+					</h2>
+					<p className="mt-4 text-lg leading-relaxed text-gray-600 dark:text-gray-400">
+						{SITE_NAME} is a free online QR code generator made by
+						KafLabs. It creates QR codes for 8 content types, renders
+						them in your browser, and exports PNG, SVG, and PDF
+						files. Tracked QR codes add scan analytics and a
+						destination URL that you can change after printing.
+						There is no watermark, no expiry, and no credit card.
+					</p>
+				</div>
+			</section>
+
 			{/* QR Types Grid */}
-			<section className="py-20">
+			<section
+				aria-labelledby="types-heading"
+				className="pb-20">
 				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+						<h2
+							id="types-heading"
+							className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
 							QR Codes for Every Use Case
 						</h2>
 						<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
@@ -253,7 +337,7 @@ export default async function HomePage() {
 									<qr.icon className="h-6 w-6" />
 								</div>
 								<h3 className="mt-3 text-sm font-semibold text-gray-900 dark:text-white">
-									{qr.label}
+									{qr.label} QR Code
 								</h3>
 								<p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
 									{qr.description}
@@ -261,42 +345,35 @@ export default async function HomePage() {
 							</Link>
 						))}
 					</div>
+					<div className="mt-8 text-center">
+						<Link
+							href="/qr-types"
+							className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+							Compare all QR code types
+							<ArrowRight className="h-4 w-4" />
+						</Link>
+					</div>
 				</div>
 			</section>
 
 			{/* How It Works */}
-			<section className="bg-gray-50 py-20 dark:bg-gray-900/50">
+			<section
+				aria-labelledby="how-heading"
+				className="bg-gray-50 py-20 dark:bg-gray-900/50">
 				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
-							How It Works
+						<h2
+							id="how-heading"
+							className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+							How to Create a QR Code
 						</h2>
 						<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
 							Three simple steps to create your QR code
 						</p>
 					</div>
-					<div className="mt-12 grid gap-8 md:grid-cols-3">
-						{[
-							{
-								step: '1',
-								title: 'Choose Your Type',
-								description:
-									'Select what kind of QR code you need — URL, Wi-Fi, vCard, or more.'
-							},
-							{
-								step: '2',
-								title: 'Customize & Choose Mode',
-								description:
-									'Set colors, pick Direct mode for speed or Tracked mode for analytics.'
-							},
-							{
-								step: '3',
-								title: 'Download & Share',
-								description:
-									'Download your QR code as PNG, SVG, or PDF. Print it or share it digitally.'
-							}
-						].map(item => (
-							<div
+					<ol className="mt-12 grid gap-8 md:grid-cols-3">
+						{howItWorks.map(item => (
+							<li
 								key={item.step}
 								className="relative rounded-2xl border border-gray-200 bg-white p-8 text-center dark:border-gray-800 dark:bg-gray-900">
 								<div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-primary text-lg font-bold text-white">
@@ -308,17 +385,21 @@ export default async function HomePage() {
 								<p className="mt-2 text-sm text-gray-600 dark:text-gray-400">
 									{item.description}
 								</p>
-							</div>
+							</li>
 						))}
-					</div>
+					</ol>
 				</div>
 			</section>
 
 			{/* Features */}
-			<section className="py-20">
+			<section
+				aria-labelledby="features-heading"
+				className="py-20">
 				<div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+						<h2
+							id="features-heading"
+							className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
 							Everything You Need
 						</h2>
 						<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
@@ -346,12 +427,68 @@ export default async function HomePage() {
 				</div>
 			</section>
 
+			{/* Direct vs Tracked comparison */}
+			<section
+				aria-labelledby="compare-heading"
+				className="bg-gray-50 py-20 dark:bg-gray-900/50">
+				<div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+					<div className="text-center">
+						<h2
+							id="compare-heading"
+							className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+							Direct vs Tracked QR Codes
+						</h2>
+						<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
+							Direct is a static QR code. Tracked is a dynamic QR
+							code. Pick the one that fits your use.
+						</p>
+					</div>
+					<div className="mt-12 overflow-x-auto rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
+						<table className="w-full text-left text-sm">
+							<thead className="bg-gray-50 text-xs uppercase tracking-wide text-gray-500 dark:bg-gray-800/60 dark:text-gray-400">
+								<tr>
+									<th scope="col" className="px-6 py-3">
+										Feature
+									</th>
+									<th scope="col" className="px-6 py-3">
+										Direct
+									</th>
+									<th scope="col" className="px-6 py-3">
+										Tracked
+									</th>
+								</tr>
+							</thead>
+							<tbody className="divide-y divide-gray-200 dark:divide-gray-800">
+								{comparison.map(row => (
+									<tr key={row.feature}>
+										<th
+											scope="row"
+											className="px-6 py-3 font-medium text-gray-900 dark:text-white">
+											{row.feature}
+										</th>
+										<td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+											{row.direct}
+										</td>
+										<td className="px-6 py-3 text-gray-600 dark:text-gray-400">
+											{row.tracked}
+										</td>
+									</tr>
+								))}
+							</tbody>
+						</table>
+					</div>
+				</div>
+			</section>
+
 			{/* Support */}
 			<section
 				id="support"
-				className="bg-gray-50 py-20 dark:bg-gray-900/50">
+				aria-labelledby="support-heading"
+				className="py-20">
 				<div className="mx-auto max-w-3xl px-4 text-center sm:px-6 lg:px-8">
-					<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+					<h2
+						id="support-heading"
+						className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
 						Support {SITE_NAME}
 					</h2>
 					<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">
@@ -368,12 +505,15 @@ export default async function HomePage() {
 				</div>
 			</section>
 
-
 			{/* FAQ */}
-			<section className="bg-gray-50 py-20 dark:bg-gray-900/50">
+			<section
+				aria-labelledby="faq-heading"
+				className="bg-gray-50 py-20 dark:bg-gray-900/50">
 				<div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
 					<div className="text-center">
-						<h2 className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
+						<h2
+							id="faq-heading"
+							className="font-heading text-3xl font-bold text-gray-900 dark:text-white">
 							Frequently Asked Questions
 						</h2>
 					</div>
@@ -383,7 +523,9 @@ export default async function HomePage() {
 								key={faq.q}
 								className="group rounded-2xl border border-gray-200 bg-white dark:border-gray-800 dark:bg-gray-900">
 								<summary className="flex cursor-pointer items-center justify-between px-6 py-4 text-sm font-semibold text-gray-900 dark:text-white [&::-webkit-details-marker]:hidden">
-									{faq.q}
+									<h3 className="text-sm font-semibold">
+										{faq.q}
+									</h3>
 									<ChevronDown className="h-4 w-4 shrink-0 text-gray-400 transition-transform group-open:rotate-180" />
 								</summary>
 								<div className="px-6 pb-4">
@@ -398,9 +540,13 @@ export default async function HomePage() {
 			</section>
 
 			{/* CTA */}
-			<section className="py-20">
+			<section
+				aria-labelledby="cta-heading"
+				className="py-20">
 				<div className="mx-auto max-w-4xl px-4 text-center sm:px-6 lg:px-8">
-					<h2 className="font-heading text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
+					<h2
+						id="cta-heading"
+						className="font-heading text-3xl font-bold text-gray-900 sm:text-4xl dark:text-white">
 						Ready to Create Your QR Code?
 					</h2>
 					<p className="mt-4 text-lg text-gray-600 dark:text-gray-400">

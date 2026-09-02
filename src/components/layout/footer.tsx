@@ -3,11 +3,16 @@ import Image from "next/image";
 import { SITE_NAME, KAFLABS_URL, KAFLABS_PRIVACY_URL, KAFLABS_TERMS_URL } from "@/lib/constants";
 
 const footerLinks = {
-  Product: [
+  "QR Code Types": [
+    { href: "/qr-types", label: "All QR code types" },
     { href: "/qr-types/url", label: "URL QR Code" },
     { href: "/qr-types/wifi", label: "Wi-Fi QR Code" },
     { href: "/qr-types/vcard", label: "vCard QR Code" },
     { href: "/qr-types/email", label: "Email QR Code" },
+    { href: "/qr-types/sms", label: "SMS QR Code" },
+    { href: "/qr-types/whatsapp", label: "WhatsApp QR Code" },
+    { href: "/qr-types/pdf", label: "PDF QR Code" },
+    { href: "/qr-types/plain-text", label: "Plain Text QR Code" },
   ],
   Company: [
     { href: "/about", label: "About" },
