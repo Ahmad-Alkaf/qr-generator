@@ -7,8 +7,6 @@ import {
   User,
   Mail,
   Phone,
-  MessageSquare,
-  MessageCircle,
   FileText,
   Type,
   Building,
@@ -59,7 +57,10 @@ function getUrlWarning(val: string): "protocol" | "domain" | null {
   const hasProtocol = /^https?:\/\//i.test(val);
 
   // Extract hostname: strip protocol, then take part before /, ?, #, and remove port
-  let hostname = val.replace(/^https?:\/\//i, "").split(/[/?#]/)[0].replace(/:\d+$/, "");
+  const hostname = val
+    .replace(/^https?:\/\//i, "")
+    .split(/[/?#]/)[0]
+    .replace(/:\d+$/, "");
 
   if (!VALID_DOMAIN.test(hostname)) return "domain";
   if (!hasProtocol) return "protocol";

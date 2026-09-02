@@ -7,6 +7,9 @@ export const metadata: Metadata = {
 	alternates: {canonical: '/privacy'}
 };
 
+// Keep this date equal to the day the wording last changed.
+const LAST_UPDATED = 'September 2, 2026';
+
 export default function PrivacyPage() {
 	return (
 		<div className="py-20">
@@ -15,7 +18,7 @@ export default function PrivacyPage() {
 					Privacy Policy
 				</h1>
 				<p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-					Last updated: March 19, 2026
+					Last updated: {LAST_UPDATED}
 				</p>
 				<p className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
 					{SITE_NAME} is a product of KafLabs. This page is a
@@ -42,26 +45,36 @@ export default function PrivacyPage() {
 							<li>
 								<strong>Account information:</strong> name,
 								email address, and profile image provided
-								through your authentication provider (Google,
-								GitHub, etc.)
+								through our authentication provider (Clerk) when
+								you sign in with an email address or a
+								third-party account.
 							</li>
 							<li>
-								<strong>QR code data:</strong> the content you
-								encode in your QR codes and associated
-								customization settings
+								<strong>QR code data (signed-in users):</strong>{' '}
+								the content you encode in your QR codes and the
+								customization settings, stored so you can find
+								and download them again in your dashboard. QR
+								codes made without an account are not stored.
 							</li>
 							<li>
 								<strong>
 									Scan analytics (Tracked QR codes only):
 								</strong>{' '}
-								IP address (anonymized), approximate location
-								(country/city), device type, operating system,
-								browser, and timestamp
+								a truncated IP address, approximate location
+								(country and city, when the network provides
+								it), device type, operating system, browser,
+								referrer, and timestamp of each scan.
 							</li>
 							<li>
-								<strong>Usage data:</strong> pages visited,
-								features used, and interaction patterns to
-								improve the Service
+								<strong>Usage counters:</strong> an anonymous
+								record of the QR code type each time a code is
+								downloaded. It contains no content and no
+								account identifier.
+							</li>
+							<li>
+								<strong>Contact messages:</strong> the subject
+								and message you send through the contact form,
+								together with your account name and email.
 							</li>
 						</ul>
 					</section>
@@ -77,8 +90,7 @@ export default function PrivacyPage() {
 								To provide scan analytics for Tracked QR codes
 							</li>
 							<li>
-								To send transactional emails (account
-								verification)
+								To answer your contact messages
 							</li>
 							<li>
 								To improve the Service and develop new features
@@ -88,6 +100,10 @@ export default function PrivacyPage() {
 								Service
 							</li>
 						</ul>
+						<p className="mt-3">
+							Account emails such as sign-in verification are
+							sent by our authentication provider on our behalf.
+						</p>
 					</section>
 
 					<section>
@@ -100,13 +116,14 @@ export default function PrivacyPage() {
 							servers when these codes are scanned. We have no
 							visibility into Direct QR code usage.
 						</p>
-						<p className="mt-2">
+						<p className="mt-3">
 							<strong>Tracked QR codes</strong> redirect through
-							our servers, which allows us to collect anonymized
-							scan data. This data is used solely to provide scan
-							analytics to the QR code owner. IP addresses are not
-							stored in full; only approximate geographic location
-							is retained.
+							our servers, which allows us to record scan data.
+							This data is used solely to provide scan analytics to
+							the QR code owner. The IP address is truncated
+							before it is stored (the last part of the address is
+							removed), so a scan cannot be linked to a single
+							device.
 						</p>
 					</section>
 
@@ -115,13 +132,16 @@ export default function PrivacyPage() {
 							4. Data Sharing
 						</h2>
 						<p className="mt-3">
-							We do not sell your personal information. We may
-							share data with:
+							We do not sell your personal information. We share
+							data only with:
 						</p>
 						<ul className="mt-2 list-inside list-disc space-y-1">
 							<li>
 								<strong>Service providers:</strong> Clerk
-								(authentication) and cloud hosting providers
+								(authentication), our hosting and database
+								providers, and, when enabled, Upstash (request
+								rate limiting, which processes a truncated form
+								of your IP address)
 							</li>
 							<li>
 								<strong>Legal requirements:</strong> when
@@ -135,10 +155,13 @@ export default function PrivacyPage() {
 							5. Data Retention
 						</h2>
 						<p className="mt-3">
-							Account data is retained as long as your account is
-							active. QR code data and scan analytics are retained
-							for the duration of your account. You may request
-							deletion of your data at any time by contacting us.
+							Account data, QR codes, and scan analytics are
+							retained for as long as your account exists. When you
+							delete your account, your account record, your QR
+							codes, their scan data, and your contact messages
+							are deleted. Tracked QR codes stop working at that
+							point. Anonymous usage counters contain no personal
+							data and are kept.
 						</p>
 					</section>
 
@@ -147,10 +170,9 @@ export default function PrivacyPage() {
 							6. Security
 						</h2>
 						<p className="mt-3">
-							We implement industry-standard security measures
-							including encryption in transit (TLS), secure
-							authentication via Clerk, and regular security
-							audits. However, no method of transmission over the
+							Data is encrypted in transit (TLS). Authentication
+							is handled by Clerk; we never see or store your
+							password. However, no method of transmission over the
 							Internet is 100% secure.
 						</p>
 					</section>
@@ -162,12 +184,14 @@ export default function PrivacyPage() {
 						<p className="mt-3">You have the right to:</p>
 						<ul className="mt-2 list-inside list-disc space-y-1">
 							<li>
-								Access, update, or delete your personal
-								information
+								Access, update, or delete your account from the
+								dashboard settings page
 							</li>
-							<li>Export your QR code data</li>
-							<li>Opt out of non-essential communications</li>
-							<li>Request a copy of data we hold about you</li>
+							<li>
+								Delete individual QR codes and their scan data
+								from your dashboard
+							</li>
+							<li>Request a copy of the data we hold about you</li>
 						</ul>
 					</section>
 
@@ -176,9 +200,10 @@ export default function PrivacyPage() {
 							8. Cookies
 						</h2>
 						<p className="mt-3">
-							We use essential cookies for authentication and
-							session management. You can control cookie
-							preferences through your browser settings.
+							We use only essential cookies, set by Clerk, for
+							authentication and session management. We do not use
+							advertising or third-party analytics cookies. You can
+							control cookies through your browser settings.
 						</p>
 					</section>
 

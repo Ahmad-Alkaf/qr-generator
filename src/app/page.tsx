@@ -91,9 +91,9 @@ const features = [
 	},
 	{
 		icon: Shield,
-		title: 'Reliable & Secure',
+		title: 'Private by Design',
 		description:
-			'Built on modern infrastructure with reliable hosting. Your QR codes just work.'
+			'QR images are generated in your browser. Direct QR codes never touch our server, and nothing is stored unless you sign in.'
 	}
 ];
 

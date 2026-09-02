@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import {
   Loader2,
   Zap,
@@ -23,18 +23,28 @@ import {
   Diamond,
   Sparkles,
   Gem,
+  AlertCircle,
 } from "lucide-react";
 import { useUser } from "@clerk/nextjs";
 import NextLink from "next/link";
+import { QRPreview } from "./qr-preview";
+import { QRTypeFields } from "./qr-type-fields";
 import {
-  QRPreview,
+  buildQRData,
+  TRACKABLE_TYPES,
+  type QRTypeValue,
   type QRDotType,
   type QRCornerSquareType,
   type QRCornerDotType,
-} from "./qr-preview";
-import { QRTypeFields } from "./qr-type-fields";
-import { buildQRData, type QRTypeValue } from "@/lib/qr";
+} from "@/lib/qr";
 import { cn } from "@/lib/utils";
+import {
+  renderQRBlob,
+  downloadBlob,
+  EXPORT_SIZE,
+  type DownloadFormat,
+  type ErrorCorrection,
+} from "@/lib/qr-export";
 
 interface QRGeneratorProps {
   defaultType?: QRTypeValue;
@@ -51,8 +61,6 @@ const QR_TYPE_OPTIONS: { value: QRTypeValue; label: string; icon: React.Componen
   { value: "PDF", label: "PDF", icon: FileText },
   { value: "PLAIN_TEXT", label: "Text", icon: Type },
 ];
-
-const TRACKABLE_TYPES = new Set<QRTypeValue>(["URL", "PDF", "WHATSAPP"]);
 
 const DOT_STYLES: { value: QRDotType; label: string; icon: React.ComponentType<{ className?: string }> }[] = [
   { value: "square", label: "Square", icon: Square },
@@ -74,33 +82,6 @@ const CORNER_DOT_STYLES: { value: QRCornerDotType; label: string }[] = [
   { value: "dot", label: "Dot" },
 ];
 
-/* ── Client-side helpers for download ── */
-
-async function createPdfFromPng(pngBlob: Blob): Promise<Blob> {
-  const { PDFDocument } = await import("pdf-lib");
-  const pdfDoc = await PDFDocument.create();
-  const pngBytes = new Uint8Array(await pngBlob.arrayBuffer());
-  const pngImage = await pdfDoc.embedPng(pngBytes);
-  const padding = 40;
-  const pageW = pngImage.width + padding * 2;
-  const pageH = pngImage.height + padding * 2;
-  const page = pdfDoc.addPage([pageW, pageH]);
-  page.drawImage(pngImage, { x: padding, y: padding, width: pngImage.width, height: pngImage.height });
-  const pdfBytes = await pdfDoc.save();
-  return new Blob([new Uint8Array(pdfBytes)], { type: "application/pdf" });
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  document.body.removeChild(a);
-  URL.revokeObjectURL(url);
-}
-
 /* ── Component ── */
 
 export function QRGenerator({ defaultType = "URL", compact = false }: QRGeneratorProps) {
@@ -111,99 +92,98 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
   const [bgColor, setBgColor] = useState("#FFFFFF");
   const [transparentBg, setTransparentBg] = useState(false);
   const [isDirect, setIsDirect] = useState(true);
-  const [downloadingFormat, setDownloadingFormat] = useState<"png" | "svg" | "pdf" | null>(null);
-  const [errorCorrection, setErrorCorrection] = useState<"L" | "M" | "Q" | "H">("M");
+  const [downloadingFormat, setDownloadingFormat] = useState<DownloadFormat | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [errorCorrection, setErrorCorrection] = useState<ErrorCorrection>("M");
   const [dotType, setDotType] = useState<QRDotType>("square");
   const [cornerSquareType, setCornerSquareType] = useState<QRCornerSquareType>("square");
   const [cornerDotType, setCornerDotType] = useState<QRCornerDotType>("square");
 
+  // Remember what was already saved so that downloading the same QR code in
+  // several formats does not create duplicate records or short codes.
+  const savedRef = useRef<{ key: string; qrData: string } | null>(null);
+
   const effectiveBgColor = transparentBg ? "transparent" : bgColor;
 
   // Preview always shows the actual content so users can verify their input.
-  // The tracked redirect URL is generated server-side only at download time.
+  // The tracked redirect URL is created server-side only at download time.
   const qrData = content ? buildQRData(type, content) : "";
 
-  const handleDownload = useCallback(async (format: "png" | "svg" | "pdf") => {
+  const handleDownload = useCallback(async (format: DownloadFormat) => {
     if (!content || downloadingFormat) return;
     if (!isDirect && !isSignedIn) return;
 
     setDownloadingFormat(format);
+    setError(null);
 
     try {
+      const payload = {
+        type,
+        content,
+        foregroundColor: fgColor,
+        backgroundColor: effectiveBgColor,
+        size: EXPORT_SIZE,
+        errorCorrection,
+        dotType,
+        cornerSquareType,
+        cornerDotType,
+        isDirect,
+      };
+      const saveKey = JSON.stringify(payload);
+
       let qrDataToEncode: string;
 
-      // Fire-and-forget: track every QR generation (including anonymous)
-      fetch("/api/qr/track", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ type }),
-      }).catch(() => {});
-
-      if (isDirect) {
-        qrDataToEncode = buildQRData(type, content);
-        // Fire-and-forget save to user account
-        if (isSignedIn) {
-          fetch("/api/qr/generate", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: effectiveBgColor, size: 600, errorCorrection, isDirect: true }),
-          }).catch(() => {});
-        }
+      if (savedRef.current?.key === saveKey) {
+        qrDataToEncode = savedRef.current.qrData;
       } else {
-        // Tracked: call API to create entry and get redirect URL
-        const res = await fetch("/api/qr/generate", {
+        // Anonymous counter: records only the QR type, never the content.
+        fetch("/api/qr/track", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ type, content, foregroundColor: fgColor, backgroundColor: effectiveBgColor, size: 600, errorCorrection, isDirect: false }),
-        });
-        if (!res.ok) {
-          const err = await res.json();
-          alert(err.error || "Failed to create tracked QR code");
-          return;
+          body: JSON.stringify({ type }),
+        }).catch(() => {});
+
+        if (isDirect) {
+          qrDataToEncode = buildQRData(type, content);
+          // Save to the account when signed in. Failure does not block the download.
+          if (isSignedIn) {
+            fetch("/api/qr/generate", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: saveKey,
+            }).catch(() => {});
+          }
+        } else {
+          // Tracked: create the record and get the redirect URL
+          const res = await fetch("/api/qr/generate", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: saveKey,
+          });
+          const data = await res.json().catch(() => ({}));
+          if (!res.ok || typeof data.qrData !== "string") {
+            setError(data.error || "Failed to create the Tracked QR code. Please try again.");
+            return;
+          }
+          qrDataToEncode = data.qrData;
         }
-        const data = await res.json();
-        qrDataToEncode = data.qrData;
+
+        savedRef.current = { key: saveKey, qrData: qrDataToEncode };
       }
 
-      // Generate QR image client-side
-      const { default: QRCodeStyling } = await import("qr-code-styling");
-      const qrSize = 600;
-
-      const qr = new QRCodeStyling({
-        width: qrSize,
-        height: qrSize,
-        type: format === "svg" ? "svg" : "canvas",
+      const blob = await renderQRBlob({
         data: qrDataToEncode,
-        margin: 8,
-        dotsOptions: { color: fgColor, type: dotType },
-        cornersSquareOptions: { color: fgColor, type: cornerSquareType },
-        cornersDotOptions: { color: fgColor, type: cornerDotType },
-        backgroundOptions: { color: effectiveBgColor },
-        qrOptions: { errorCorrectionLevel: errorCorrection },
+        format,
+        fgColor,
+        bgColor: effectiveBgColor,
+        errorCorrection,
+        dotType,
+        cornerSquareType,
+        cornerDotType,
       });
-
-      const filename = `qrforge-${type.toLowerCase()}`;
-
-      if (format === "svg") {
-        const blob = await qr.getRawData("svg");
-        if (!blob) throw new Error("Failed to generate SVG");
-        downloadBlob(blob as Blob, `${filename}.svg`);
-        return;
-      }
-
-      // PNG or PDF
-      const rawBlob = await qr.getRawData("png");
-      if (!rawBlob) throw new Error("Failed to generate PNG");
-
-      if (format === "pdf") {
-        const pdfBlob = await createPdfFromPng(rawBlob as Blob);
-        downloadBlob(pdfBlob, `${filename}.pdf`);
-        return;
-      }
-
-      downloadBlob(rawBlob as Blob, `${filename}.png`);
+      downloadBlob(blob, `qrforge-${type.toLowerCase()}.${format}`);
     } catch {
-      alert("Failed to generate QR code. Please try again.");
+      setError("Failed to generate the QR code. Please try again.");
     } finally {
       setDownloadingFormat(null);
     }
@@ -211,6 +191,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
 
   const handleContentChange = useCallback((value: string) => {
     setContent(value);
+    setError(null);
   }, []);
 
   const showSignInPrompt = !isDirect && !isSignedIn;
@@ -242,6 +223,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                     if (value !== type) {
                       setType(value);
                       setContent("");
+                      setError(null);
                       if (!TRACKABLE_TYPES.has(value)) setIsDirect(true);
                     }
                   }}
@@ -304,7 +286,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
             </div>
             {!isDirect && isSignedIn && (
               <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
-                Tracked QR codes redirect through our server, enabling scan analytics and editable destinations.
+                Tracked QR codes redirect through our server. This enables scan analytics and lets you change the destination later.
               </p>
             )}
             {showSignInPrompt && (
@@ -413,6 +395,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                 />
                 <input
                   type="text"
+                  aria-label="Foreground color hex value"
                   value={fgColor}
                   onChange={(e) => setFgColor(e.target.value)}
                   className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm uppercase dark:border-gray-700 dark:bg-gray-800 dark:text-white"
@@ -449,6 +432,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                 />
                 <input
                   type="text"
+                  aria-label="Background color hex value"
                   value={transparentBg ? "transparent" : bgColor}
                   onChange={(e) => setBgColor(e.target.value)}
                   disabled={transparentBg}
@@ -469,9 +453,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
             <select
               id="error-correction"
               value={errorCorrection}
-              onChange={(e) =>
-                setErrorCorrection(e.target.value as "L" | "M" | "Q" | "H")
-              }
+              onChange={(e) => setErrorCorrection(e.target.value as ErrorCorrection)}
               className="w-full rounded-xl border border-gray-300 bg-white px-4 py-2.5 text-sm shadow-sm focus:border-primary focus:outline-none focus:ring-2 focus:ring-primary/20 dark:border-gray-700 dark:bg-gray-800 dark:text-white"
             >
               <option value="L">Low (7%)</option>
@@ -481,8 +463,8 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
             </select>
             <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
               How much of the QR code can be damaged and still scan. Higher
-              levels make the code denser but more resilient. Use High if
-              you&apos;re adding a logo overlay.
+              levels make the code denser but more resilient. Use High for
+              small prints or if you plan to place a logo on the code.
             </p>
           </div>
 
@@ -546,6 +528,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                       <NextLink
                         key={format}
                         href="/sign-in"
+                        title={`Sign in to download ${label}`}
                         className="group flex flex-col items-center gap-2 rounded-xl bg-gray-200 px-4 py-4 text-center opacity-50 transition-all hover:opacity-70 dark:bg-gray-800"
                       >
                         <Lock className="h-5 w-5 text-gray-500 dark:text-gray-400" />
@@ -560,6 +543,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                   return (
                     <button
                       key={format}
+                      type="button"
                       onClick={() => handleDownload(format)}
                       disabled={isDisabled}
                       className={cn(
@@ -582,6 +566,15 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
                   );
                 })}
               </div>
+            )}
+            {error && (
+              <p
+                role="alert"
+                className="mt-3 flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-400"
+              >
+                <AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </p>
             )}
           </div>
         </div>

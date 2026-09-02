@@ -1,5 +1,9 @@
 export const SITE_NAME = "QRForge";
-export const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "https://www.qrforge.app";
+// Canonical origin. Tracked QR codes embed it, so set NEXT_PUBLIC_SITE_URL
+// at build time in production (see Dockerfile).
+export const SITE_URL = (
+  process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000"
+).replace(/\/+$/, "");
 // All KafLabs products share the kaflabs.com contact addresses.
 export const SUPPORT_EMAIL = "support@kaflabs.com";
 export const PRIVACY_EMAIL = "privacy@kaflabs.com";

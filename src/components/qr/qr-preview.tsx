@@ -1,10 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import type { QRDotType, QRCornerSquareType, QRCornerDotType } from "@/lib/qr";
 
-export type QRDotType = "square" | "dots" | "rounded" | "extra-rounded" | "classy" | "classy-rounded";
-export type QRCornerSquareType = "square" | "dot" | "extra-rounded";
-export type QRCornerDotType = "square" | "dot";
+export type { QRDotType, QRCornerSquareType, QRCornerDotType };
 
 interface QRPreviewProps {
   value: string;
@@ -17,6 +16,8 @@ interface QRPreviewProps {
   cornerDotType?: QRCornerDotType;
 }
 
+type QRCodeStylingCtor = typeof import("qr-code-styling").default;
+
 export function QRPreview({
   value,
   size = 256,
@@ -28,16 +29,23 @@ export function QRPreview({
   cornerDotType = "square",
 }: QRPreviewProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const [QRStyling, setQRStyling] = useState<any>(null);
+  const [QRStyling, setQRStyling] = useState<QRCodeStylingCtor | null>(null);
 
   useEffect(() => {
-    import("qr-code-styling").then((mod) => setQRStyling(() => mod.default));
+    let active = true;
+    import("qr-code-styling").then((mod) => {
+      if (active) setQRStyling(() => mod.default);
+    });
+    return () => {
+      active = false;
+    };
   }, []);
 
   useEffect(() => {
-    if (!QRStyling || !containerRef.current || !value) {
-      if (containerRef.current) containerRef.current.innerHTML = "";
+    const container = containerRef.current;
+    if (!container) return;
+    if (!QRStyling || !value) {
+      container.innerHTML = "";
       return;
     }
 
@@ -54,8 +62,8 @@ export function QRPreview({
       qrOptions: { errorCorrectionLevel: level },
     });
 
-    containerRef.current.innerHTML = "";
-    qr.append(containerRef.current);
+    container.innerHTML = "";
+    qr.append(container);
   }, [QRStyling, value, size, fgColor, bgColor, level, dotType, cornerSquareType, cornerDotType]);
 
   if (!value) {
@@ -65,7 +73,7 @@ export function QRPreview({
         style={{ width: size, height: size }}
       >
         <p className="px-4 text-center text-sm text-gray-400 dark:text-gray-500">
-          Enter content to generate QR code
+          Enter content to generate a QR code
         </p>
       </div>
     );

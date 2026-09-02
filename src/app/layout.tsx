@@ -5,7 +5,7 @@ import {dark} from '@clerk/ui/themes';
 import './globals.css';
 import {Header} from '@/components/layout/header';
 import {Footer} from '@/components/layout/footer';
-import {SITE_NAME, SITE_URL} from '@/lib/constants';
+import {SITE_DESCRIPTION, SITE_NAME, SITE_URL} from '@/lib/constants';
 
 const outfit = Outfit({
 	variable: '--font-outfit',
@@ -25,8 +25,7 @@ export const metadata: Metadata = {
 		default: `Free QR Code Generator — Create Custom QR Codes Instantly | ${SITE_NAME}`,
 		template: `%s | ${SITE_NAME}`
 	},
-	description:
-		'Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.',
+	description: SITE_DESCRIPTION,
 	keywords: [
 		'QR code generator',
 		'create QR code',
@@ -40,15 +39,12 @@ export const metadata: Metadata = {
 		locale: 'en_US',
 		siteName: SITE_NAME,
 		title: 'Free QR Code Generator — Create Custom QR Codes Instantly',
-		description:
-			'Create, customize, and track QR codes. 100% free for everyone.',
-		images: [{url: '/og-image.png', width: 1200, height: 630}]
+		description: 'Create, customize, and track QR codes. Free for everyone.'
 	},
 	twitter: {
 		card: 'summary_large_image',
 		title: 'Free QR Code Generator',
-		description: 'Create, customize, and track QR codes.',
-		images: ['/og-image.png']
+		description: 'Create, customize, and track QR codes.'
 	},
 	alternates: {
 		canonical: '/'

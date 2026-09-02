@@ -4,36 +4,42 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 
 const patchSchema = z.object({
-  name: z.string().max(255).optional(),
-  destinationUrl: z.url().max(2048).optional(),
+  name: z.string().trim().max(255).optional(),
+  destinationUrl: z
+    .url({ protocol: /^https?$/, hostname: z.regexes.domain })
+    .max(2048)
+    .optional(),
 });
 
-export async function DELETE(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
-  const { id } = await params;
+async function loadOwnedQRCode(id: string) {
   const { userId } = await auth();
-
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return { error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }) };
   }
 
   const user = await prisma.user.findUnique({
     where: { clerkId: userId },
+    select: { id: true },
   });
-
   if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
+    return { error: NextResponse.json({ error: "User not found" }, { status: 404 }) };
   }
 
-  const qrCode = await prisma.qRCode.findUnique({
-    where: { id },
-  });
-
+  const qrCode = await prisma.qRCode.findUnique({ where: { id } });
   if (!qrCode || qrCode.userId !== user.id) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
+    return { error: NextResponse.json({ error: "Not found" }, { status: 404 }) };
   }
+
+  return { qrCode };
+}
+
+export async function DELETE(
+  _req: Request,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  const { id } = await params;
+  const result = await loadOwnedQRCode(id);
+  if ("error" in result) return result.error;
 
   await prisma.qRCode.delete({ where: { id } });
 
@@ -45,27 +51,9 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const { userId } = await auth();
-
-  if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const user = await prisma.user.findUnique({
-    where: { clerkId: userId },
-  });
-
-  if (!user) {
-    return NextResponse.json({ error: "User not found" }, { status: 404 });
-  }
-
-  const qrCode = await prisma.qRCode.findUnique({
-    where: { id },
-  });
-
-  if (!qrCode || qrCode.userId !== user.id) {
-    return NextResponse.json({ error: "Not found" }, { status: 404 });
-  }
+  const result = await loadOwnedQRCode(id);
+  if ("error" in result) return result.error;
+  const { qrCode } = result;
 
   let body: unknown;
   try {
@@ -82,7 +70,7 @@ export async function PATCH(
     );
   }
 
-  if (parsed.data.destinationUrl && qrCode.isDirect) {
+  if (parsed.data.destinationUrl !== undefined && qrCode.isDirect) {
     return NextResponse.json(
       { error: "Cannot set destination URL on a Direct QR code" },
       { status: 400 }
@@ -92,9 +80,13 @@ export async function PATCH(
   const updated = await prisma.qRCode.update({
     where: { id },
     data: {
-      name: parsed.data.name ?? qrCode.name,
+      name:
+        parsed.data.name === undefined
+          ? qrCode.name
+          : parsed.data.name || null,
       destinationUrl: parsed.data.destinationUrl ?? qrCode.destinationUrl,
     },
+    select: { id: true, name: true, destinationUrl: true, updatedAt: true },
   });
 
   return NextResponse.json(updated);

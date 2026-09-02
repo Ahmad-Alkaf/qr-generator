@@ -1,5 +1,6 @@
 import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { Globe, Smartphone, Monitor } from "lucide-react";
 
@@ -9,48 +10,44 @@ export default async function AnalyticsPage() {
 
   const user = await prisma.user.findUnique({
     where: { clerkId: userId },
+    select: { id: true },
   });
 
-  const scans = user
-    ? await prisma.scan.findMany({
-        where: { qrCode: { userId: user.id } },
-        orderBy: { scannedAt: "desc" },
-        take: 200,
-        include: {
-          qrCode: { select: { name: true, shortCode: true, type: true } },
-        },
+  const scanFilter = { qrCode: { userId: user?.id ?? "" } };
+
+  const [totalScans, countries, devices, topQRRows] = user
+    ? await Promise.all([
+        prisma.scan.count({ where: scanFilter }),
+        prisma.scan.groupBy({
+          by: ["country"],
+          where: scanFilter,
+          _count: { _all: true },
+          orderBy: { _count: { country: "desc" } },
+          take: 8,
+        }),
+        prisma.scan.groupBy({
+          by: ["device"],
+          where: scanFilter,
+          _count: { _all: true },
+          orderBy: { _count: { device: "desc" } },
+        }),
+        prisma.scan.groupBy({
+          by: ["qrCodeId"],
+          where: scanFilter,
+          _count: { _all: true },
+          orderBy: { _count: { qrCodeId: "desc" } },
+          take: 10,
+        }),
+      ])
+    : [0, [], [], []];
+
+  const topQRCodes = topQRRows.length
+    ? await prisma.qRCode.findMany({
+        where: { id: { in: topQRRows.map((row) => row.qrCodeId) } },
+        select: { id: true, name: true, shortCode: true, type: true },
       })
     : [];
-
-  const totalScans = scans.length;
-
-  // Aggregate
-  const countryStats = new Map<string, number>();
-  const deviceStats = new Map<string, number>();
-  const qrStats = new Map<string, { name: string; count: number }>();
-
-  for (const scan of scans) {
-    const country = scan.country || "Unknown";
-    countryStats.set(country, (countryStats.get(country) || 0) + 1);
-
-    const device = scan.device || "Unknown";
-    deviceStats.set(device, (deviceStats.get(device) || 0) + 1);
-
-    const qrName =
-      scan.qrCode.name || scan.qrCode.shortCode || scan.qrCode.type;
-    const existing = qrStats.get(scan.qrCodeId);
-    if (existing) {
-      existing.count++;
-    } else {
-      qrStats.set(scan.qrCodeId, { name: qrName, count: 1 });
-    }
-  }
-
-  const sortedCountries = [...countryStats.entries()].sort((a, b) => b[1] - a[1]);
-  const sortedDevices = [...deviceStats.entries()].sort((a, b) => b[1] - a[1]);
-  const topQR = [...qrStats.entries()]
-    .sort((a, b) => b[1].count - a[1].count)
-    .slice(0, 10);
+  const qrById = new Map(topQRCodes.map((qr) => [qr.id, qr]));
 
   return (
     <div>
@@ -58,7 +55,7 @@ export default async function AnalyticsPage() {
         Analytics Overview
       </h1>
       <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">
-        Aggregated scan data across all your tracked QR codes
+        Aggregated scan data across all your Tracked QR codes
       </p>
 
       {totalScans === 0 ? (
@@ -68,9 +65,7 @@ export default async function AnalyticsPage() {
       ) : (
         <>
           <div className="mt-6 rounded-2xl border border-gray-200 bg-white p-6 dark:border-gray-800 dark:bg-gray-900">
-            <p className="text-sm text-gray-500 dark:text-gray-400">
-              Total Scans (last 200)
-            </p>
+            <p className="text-sm text-gray-500 dark:text-gray-400">Total Scans</p>
             <p className="mt-1 text-4xl font-bold text-gray-900 dark:text-white">
               {totalScans}
             </p>
@@ -83,16 +78,29 @@ export default async function AnalyticsPage() {
                 Top QR Codes
               </h3>
               <div className="mt-4 space-y-3">
-                {topQR.map(([id, data]) => (
-                  <div key={id} className="flex items-center justify-between">
-                    <span className="truncate text-sm text-gray-600 dark:text-gray-400">
-                      {data.name}
-                    </span>
-                    <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {data.count}
-                    </span>
-                  </div>
-                ))}
+                {topQRRows.map((row) => {
+                  const qr = qrById.get(row.qrCodeId);
+                  const label = qr?.name || qr?.shortCode || qr?.type || "Deleted";
+                  return (
+                    <div key={row.qrCodeId} className="flex items-center justify-between gap-2">
+                      {qr ? (
+                        <Link
+                          href={`/dashboard/qr-codes/${qr.id}`}
+                          className="truncate text-sm text-gray-600 hover:text-primary dark:text-gray-400"
+                        >
+                          {label}
+                        </Link>
+                      ) : (
+                        <span className="truncate text-sm text-gray-600 dark:text-gray-400">
+                          {label}
+                        </span>
+                      )}
+                      <span className="text-sm font-medium text-gray-900 dark:text-white">
+                        {row._count._all}
+                      </span>
+                    </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -105,13 +113,13 @@ export default async function AnalyticsPage() {
                 </h3>
               </div>
               <div className="mt-4 space-y-3">
-                {sortedCountries.slice(0, 8).map(([country, count]) => (
-                  <div key={country} className="flex items-center justify-between">
+                {countries.map((row) => (
+                  <div key={row.country ?? "unknown"} className="flex items-center justify-between">
                     <span className="text-sm text-gray-600 dark:text-gray-400">
-                      {country}
+                      {row.country ?? "Unknown"}
                     </span>
                     <span className="text-sm font-medium text-gray-900 dark:text-white">
-                      {count}
+                      {row._count._all}
                     </span>
                   </div>
                 ))}
@@ -127,9 +135,9 @@ export default async function AnalyticsPage() {
                 </h3>
               </div>
               <div className="mt-4 space-y-3">
-                {sortedDevices.map(([device, count]) => {
-                  const pct =
-                    totalScans > 0 ? Math.round((count / totalScans) * 100) : 0;
+                {devices.map((row) => {
+                  const device = row.device ?? "Unknown";
+                  const pct = Math.round((row._count._all / totalScans) * 100);
                   return (
                     <div key={device}>
                       <div className="flex items-center justify-between text-sm">

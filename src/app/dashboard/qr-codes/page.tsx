@@ -2,7 +2,7 @@ import { auth } from "@clerk/nextjs/server";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import Link from "next/link";
-import { ExternalLink, BarChart3, Zap, Trash2 } from "lucide-react";
+import { ExternalLink, BarChart3, Zap, Eye } from "lucide-react";
 import { DeleteQRButton } from "./delete-button";
 
 export default async function QRCodesPage() {
@@ -54,13 +54,16 @@ export default async function QRCodesPage() {
           {qrCodes.map((qr) => (
             <div
               key={qr.id}
-              className="flex items-center justify-between rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
+              className="flex items-center justify-between gap-4 rounded-2xl border border-gray-200 bg-white p-5 dark:border-gray-800 dark:bg-gray-900"
             >
               <div className="min-w-0 flex-1">
                 <div className="flex items-center gap-2">
-                  <h3 className="truncate font-medium text-gray-900 dark:text-white">
+                  <Link
+                    href={`/dashboard/qr-codes/${qr.id}`}
+                    className="truncate font-medium text-gray-900 hover:text-primary dark:text-white"
+                  >
                     {qr.name || `${qr.type} QR Code`}
-                  </h3>
+                  </Link>
                   {qr.isDirect ? (
                     <span className="inline-flex items-center gap-1 rounded-full bg-green-50 px-2 py-0.5 text-xs font-medium text-green-700 dark:bg-green-900/20 dark:text-green-400">
                       <Zap className="h-3 w-3" /> Direct
@@ -72,34 +75,36 @@ export default async function QRCodesPage() {
                   )}
                 </div>
                 <p className="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">
-                  {qr.content.length > 80 ? qr.content.slice(0, 80) + "..." : qr.content}
+                  {qr.isDirect
+                    ? qr.content.length > 80
+                      ? qr.content.slice(0, 80) + "..."
+                      : qr.content
+                    : qr.destinationUrl}
                 </p>
                 <div className="mt-2 flex items-center gap-4 text-xs text-gray-400 dark:text-gray-500">
                   <span>{qr.type}</span>
-                  <span>{qr.createdAt.toLocaleDateString()}</span>
+                  <span>{qr.createdAt.toLocaleDateString("en-US")}</span>
                   {!qr.isDirect && (
                     <span>{qr._count.scans} scan{qr._count.scans !== 1 ? "s" : ""}</span>
                   )}
                 </div>
               </div>
 
-              <div className="flex items-center gap-2">
-                {!qr.isDirect && (
-                  <Link
-                    href={`/dashboard/qr-codes/${qr.id}`}
-                    className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
-                    title="View analytics"
-                  >
-                    <BarChart3 className="h-4 w-4" />
-                  </Link>
-                )}
+              <div className="flex shrink-0 items-center gap-2">
+                <Link
+                  href={`/dashboard/qr-codes/${qr.id}`}
+                  className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
+                  title={qr.isDirect ? "View and download" : "View analytics and download"}
+                >
+                  {qr.isDirect ? <Eye className="h-4 w-4" /> : <BarChart3 className="h-4 w-4" />}
+                </Link>
                 {qr.shortCode && (
                   <a
                     href={`/r/${qr.shortCode}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="rounded-lg p-2 text-gray-400 hover:bg-gray-100 hover:text-primary dark:hover:bg-gray-800"
-                    title="Open redirect URL"
+                    title="Open redirect URL (counts as a scan)"
                   >
                     <ExternalLink className="h-4 w-4" />
                   </a>

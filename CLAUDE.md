@@ -8,8 +8,15 @@ Shared organization rules, product list, and shell rules are in the parent `../C
 
 - **QR generation is client-side.** The `qr-code-styling` library renders QR codes in the browser (canvas/SVG). The server API (`/api/qr/generate`) only persists metadata and, for tracked QR codes, generates a short code. It does NOT generate images.
 - **Direct vs Tracked QR codes.** Direct QR encodes content directly (no server round-trip needed for the data). Tracked QR encodes a redirect URL (`/r/[shortCode]`) that goes through the server, enabling scan analytics and editable destinations.
-- **Redirect route** at `src/app/r/[shortCode]/route.ts` handles tracked QR scans: looks up destination, logs scan data (geo from Vercel headers, UA parsing), then 302-redirects.
-- **Download formats:** PNG/SVG generated client-side via `qr-code-styling`, PDF wraps a PNG using `pdf-lib` — all in the browser.
+- **Redirect route** at `src/app/r/[shortCode]/route.ts` handles tracked QR scans: looks up destination, 302-redirects, then logs scan data with `after()` (geo from Cloudflare or Vercel headers via `src/lib/request.ts`, UA parsing, truncated IP).
+- **Download formats:** PNG/SVG generated client-side via `qr-code-styling`, PDF wraps a PNG using `pdf-lib` — all in the browser (`src/lib/qr-export.ts`).
+- **Dashboard detail page** (`/dashboard/qr-codes/[id]`) re-renders the stored QR code for download and lets the owner edit the name and, for tracked codes, the destination URL (PATCH `/api/qr/[id]`).
+
+### Deployment
+
+- Host: **Coolify** with the repository `Dockerfile` (Next.js `output: "standalone"`). The entrypoint runs `prisma migrate deploy` and then `node server.js`. Health check: `/api/health`.
+- `NEXT_PUBLIC_*` variables must be marked "Available at build time" in Coolify. See `README.md` for the full table.
+- Package manager is **npm** (`package-lock.json`). Do not add pnpm or yarn lock files.
 
 ### Auth & users
 

@@ -1,36 +1,80 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# QRForge
 
-## Getting Started
+Free QR code generator with scan analytics. A [KafLabs](https://kaflabs.com) product.
 
-First, run the development server:
+- Next.js 16, React 19, Tailwind CSS 4
+- Clerk (auth), Prisma 7 + PostgreSQL (data)
+- QR images are generated in the browser with `qr-code-styling`. The server only stores metadata and serves the `/r/[shortCode]` redirect for Tracked QR codes.
+
+## Local development
 
 ```bash
+npm install
+cp .env.example .env        # fill in the values
+npx prisma migrate dev      # creates the schema in your local PostgreSQL
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open <http://localhost:3000>.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Useful scripts:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Script | Purpose |
+|---|---|
+| `npm run build` | `prisma generate` + `next build` |
+| `npm run lint` | ESLint |
+| `npm run typecheck` | `tsc --noEmit` |
+| `npm run db:migrate` | Create and apply a migration in development |
+| `npm run db:deploy` | Apply pending migrations (production) |
+| `npm run db:studio` | Prisma Studio |
 
-## Learn More
+## Environment variables
 
-To learn more about Next.js, take a look at the following resources:
+See `.env.example`. `NEXT_PUBLIC_*` values are inlined into the client bundle at **build** time. All other values are read at **run** time.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Variable | When | Note |
+|---|---|---|
+| `NEXT_PUBLIC_SITE_URL` | build | Canonical origin, for example `https://qrforge.app`. Tracked QR codes embed it forever. |
+| `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | build | Clerk production instance |
+| `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. | build | `/sign-in`, `/sign-up`, `/dashboard`, `/dashboard` |
+| `DATABASE_URL` | run | PostgreSQL connection string |
+| `CLERK_SECRET_KEY` | run | Clerk production instance |
+| `CLERK_WEBHOOK_SECRET` | run | Clerk webhook endpoint `/api/webhooks/clerk` (events `user.created`, `user.updated`, `user.deleted`) |
+| `UPSTASH_REDIS_REST_URL`, `UPSTASH_REDIS_REST_TOKEN` | run | Optional. Without them the public API routes have no rate limit. |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Deploy on Coolify
 
-## Deploy on Vercel
+The repository ships a multi-stage `Dockerfile` that builds a Next.js standalone image. On start the container runs `prisma migrate deploy` and then the server.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. **Database.** Create a PostgreSQL resource in Coolify (or use a managed provider). Copy its connection string.
+2. **Application.** New resource, source = this repository, build pack = **Dockerfile**, port **3000**.
+3. **Environment variables.** Add every row from the table above. For each `NEXT_PUBLIC_*` variable tick **"Available at build time"** (Coolify passes them as `--build-arg`). Runtime variables need no build flag.
+4. **Domain.** Set the domain to the canonical host you put in `NEXT_PUBLIC_SITE_URL`. Let Coolify issue the certificate. Redirect the other host (apex or www) with a 301.
+5. **Health check.** Path `/api/health`, port 3000. It returns 200 only when the database answers.
+6. **Clerk.** In the Clerk dashboard create the production instance, add the domain, and register the webhook `https://<domain>/api/webhooks/clerk`. Paste its signing secret into `CLERK_WEBHOOK_SECRET`.
+7. **Deploy.** Watch the logs: the first lines show the migrations being applied.
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+### Scan location (country and city)
+
+The redirect route reads location from proxy headers:
+
+- Cloudflare in front of Coolify: `cf-ipcountry` is always sent. For city data enable the managed transform **"Add visitor location headers"**, which sends `cf-ipcity`.
+- Vercel: `x-vercel-ip-country`, `x-vercel-ip-city`.
+- No proxy that adds location headers: country and city stay empty. Device, OS, browser, and time are still recorded.
+
+Client IPs are read from `cf-connecting-ip`, then `x-forwarded-for`, then `x-real-ip`. Stored scan IPs are truncated (last IPv4 octet removed).
+
+### After deploy
+
+- Sign up, create a Tracked QR code, scan it, and check the analytics row in the dashboard.
+- Open `/sitemap.xml`, `/robots.txt`, `/manifest.webmanifest`, `/opengraph-image`, `/api/health`.
+- Footer links to the kaflabs.com privacy and terms pages open.
+
+## Project structure
+
+- `src/app/` routes (App Router). `src/app/r/[shortCode]/route.ts` is the redirect.
+- `src/components/qr/` generator UI, live preview, per-type input fields.
+- `src/lib/qr.ts` validation schema and `buildQRData()` (WIFI:, vCard, mailto:, smsto:, wa.me).
+- `src/lib/qr-export.ts` browser-side PNG/SVG/PDF rendering.
+- `src/lib/request.ts` client IP and geo header helpers.
+- `prisma/schema.prisma` and `prisma/migrations/`. The generated client goes to `src/generated/prisma/` (ignored by git).

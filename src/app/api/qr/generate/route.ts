@@ -1,16 +1,22 @@
 import { NextResponse } from "next/server";
-import { auth, clerkClient } from "@clerk/nextjs/server";
+import { auth } from "@clerk/nextjs/server";
 import { z } from "zod";
-import { qrGenerateSchema, buildQRData } from "@/lib/qr";
+import {
+  qrGenerateSchema,
+  buildQRData,
+  serializeStyle,
+  TRACKABLE_TYPES,
+} from "@/lib/qr";
 import { prisma } from "@/lib/prisma";
+import { ensureUser } from "@/lib/auth";
 import { generateShortCode } from "@/lib/shortcode";
 import { checkRateLimit } from "@/lib/rate-limit";
-
-const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL || "http://localhost:3000";
+import { getClientIp } from "@/lib/request";
+import { SITE_URL } from "@/lib/constants";
 
 export async function POST(req: Request) {
   try {
-    const ip = req.headers.get("x-forwarded-for")?.split(",")[0].trim() || "anonymous";
+    const ip = getClientIp(req.headers) || "anonymous";
     const { success } = await checkRateLimit(ip);
     if (!success) {
       return NextResponse.json(
@@ -18,9 +24,15 @@ export async function POST(req: Request) {
         { status: 429 }
       );
     }
-    const body = await req.json();
-    const parsed = qrGenerateSchema.safeParse(body);
 
+    let body: unknown;
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+    }
+
+    const parsed = qrGenerateSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
         { error: "Invalid input", details: z.treeifyError(parsed.error) },
@@ -35,8 +47,12 @@ export async function POST(req: Request) {
       backgroundColor,
       size,
       errorCorrection,
+      dotType,
+      cornerSquareType,
+      cornerDotType,
       isDirect,
     } = parsed.data;
+    const style = serializeStyle({ dotType, cornerSquareType, cornerDotType });
 
     const { userId } = await auth();
 
@@ -49,7 +65,6 @@ export async function POST(req: Request) {
     }
 
     // Tracked QR codes are only valid for types that produce HTTP URLs
-    const TRACKABLE_TYPES = new Set(["URL", "PDF", "WHATSAPP"]);
     if (!isDirect && !TRACKABLE_TYPES.has(type)) {
       return NextResponse.json(
         { error: "This QR type does not support tracked mode" },
@@ -58,50 +73,52 @@ export async function POST(req: Request) {
     }
 
     // Tracked QR codes require authentication
+    if (!isDirect && !userId) {
+      return NextResponse.json(
+        { error: "Sign in required to create Tracked QR codes" },
+        { status: 401 }
+      );
+    }
+
+    const user = userId ? await ensureUser(userId) : null;
+
     if (!isDirect) {
-      if (!userId) {
+      if (!user) {
         return NextResponse.json(
-          { error: "Sign in required to create Tracked QR codes" },
-          { status: 401 }
+          { error: "No email found for your account" },
+          { status: 400 }
         );
       }
 
-      // Get or create user in our DB
-      let user = await prisma.user.findUnique({ where: { clerkId: userId } });
-      if (!user) {
-        const clerk = await clerkClient();
-        const clerkUser = await clerk.users.getUser(userId);
-        const email = clerkUser.emailAddresses[0]?.emailAddress;
-        if (!email) {
-          return NextResponse.json(
-            { error: "No email found for your account" },
-            { status: 400 }
-          );
-        }
-        user = await prisma.user.upsert({
-          where: { clerkId: userId },
-          update: { email, name: clerkUser.fullName },
-          create: { clerkId: userId, email, name: clerkUser.fullName },
-        });
+      const destinationUrl = buildQRData(type, content);
+      if (!/^https?:\/\//i.test(destinationUrl)) {
+        return NextResponse.json(
+          { error: "Tracked QR codes need a full http(s) URL" },
+          { status: 400 }
+        );
       }
 
-      // Build data & generate shortCode
-      const destinationData = buildQRData(type, content);
       const MAX_RETRIES = 10;
-      let shortCode = "";
+      let shortCode: string | null = null;
       for (let attempt = 0; attempt < MAX_RETRIES; attempt++) {
-        shortCode = generateShortCode();
-        const exists = await prisma.qRCode.findUnique({ where: { shortCode } });
-        if (!exists) break;
-        if (attempt === MAX_RETRIES - 1) {
-          return NextResponse.json(
-            { error: "Failed to generate unique short code. Please try again." },
-            { status: 500 }
-          );
+        const candidate = generateShortCode();
+        const exists = await prisma.qRCode.findUnique({
+          where: { shortCode: candidate },
+          select: { id: true },
+        });
+        if (!exists) {
+          shortCode = candidate;
+          break;
         }
       }
+      if (!shortCode) {
+        return NextResponse.json(
+          { error: "Failed to generate unique short code. Please try again." },
+          { status: 500 }
+        );
+      }
 
-      await prisma.qRCode.create({
+      const created = await prisma.qRCode.create({
         data: {
           userId: user.id,
           type,
@@ -110,36 +127,40 @@ export async function POST(req: Request) {
           backgroundColor,
           errorCorrection,
           size,
+          style,
           isDirect: false,
           shortCode,
-          destinationUrl: destinationData,
+          destinationUrl,
         },
+        select: { id: true, shortCode: true },
       });
 
-      const qrData = `${SITE_URL}/r/${shortCode}`;
-      return NextResponse.json({ qrData });
+      return NextResponse.json({
+        id: created.id,
+        qrData: `${SITE_URL}/r/${created.shortCode}`,
+      });
     }
 
-    // Direct mode — save to account if authenticated
-    if (userId) {
-      const user = await prisma.user.findUnique({ where: { clerkId: userId } });
-      if (user) {
-        await prisma.qRCode.create({
-          data: {
-            userId: user.id,
-            type,
-            content,
-            foregroundColor,
-            backgroundColor,
-            errorCorrection,
-            size,
-            isDirect: true,
-          },
-        });
-      }
+    // Direct mode: save to the account when signed in
+    if (user) {
+      const created = await prisma.qRCode.create({
+        data: {
+          userId: user.id,
+          type,
+          content,
+          foregroundColor,
+          backgroundColor,
+          errorCorrection,
+          size,
+          style,
+          isDirect: true,
+        },
+        select: { id: true },
+      });
+      return NextResponse.json({ saved: true, id: created.id });
     }
 
-    return NextResponse.json({ saved: true });
+    return NextResponse.json({ saved: false });
   } catch (error) {
     console.error("QR generation error:", error);
     return NextResponse.json(

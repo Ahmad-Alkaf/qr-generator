@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import { QrCode, BarChart3, Palette, Zap } from "lucide-react";
 
@@ -8,7 +7,7 @@ const features = [
   {
     icon: Zap,
     title: "Instant Generation",
-    description: "Create QR codes in seconds with real-time preview",
+    description: "Create QR codes in seconds with a live preview",
   },
   {
     icon: Palette,
@@ -30,33 +29,38 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
     const el = formRef.current;
     if (!el) return;
 
-    // Check if Clerk already rendered
-    if (el.querySelector("[data-clerk-component]") || el.children.length > 0) {
-      setLoaded(true);
-      return;
-    }
-
+    // Clerk renders its form asynchronously. Watch the container and hide
+    // the skeleton once the form is in the DOM.
     const observer = new MutationObserver(() => {
       if (el.children.length > 0) {
         setLoaded(true);
         observer.disconnect();
       }
     });
-
     observer.observe(el, { childList: true, subtree: true });
-    return () => observer.disconnect();
+
+    // Handle the case where Clerk already rendered before the observer started.
+    const initialCheck = requestAnimationFrame(() => {
+      if (el.children.length > 0) {
+        setLoaded(true);
+        observer.disconnect();
+      }
+    });
+
+    return () => {
+      cancelAnimationFrame(initialCheck);
+      observer.disconnect();
+    };
   }, []);
 
   return (
     <div className="flex min-h-[calc(100vh-4rem)]">
-      {/* Left panel — branding & features */}
+      {/* Left panel: branding and features */}
       <div className="relative hidden w-[45%] overflow-hidden lg:block">
-        {/* Background layers */}
         <div className="absolute inset-0 bg-linear-to-br from-gray-900 via-gray-900 to-gray-950" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top_left,rgba(196,91,40,0.15),transparent_60%)]" />
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_bottom_right,rgba(196,91,40,0.08),transparent_60%)]" />
 
-        {/* Grid pattern overlay */}
         <div
           className="absolute inset-0 opacity-[0.03]"
           style={{
@@ -65,9 +69,7 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
           }}
         />
 
-        {/* Content */}
         <div className="relative flex h-full flex-col justify-between p-10 xl:p-14">
-          {/* Top — Logo & tagline */}
           <div>
             <p className="mt-4 max-w-sm text-lg font-medium leading-relaxed text-gray-300">
               Create, customize, and track QR codes.{" "}
@@ -75,7 +77,6 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
             </p>
           </div>
 
-          {/* Middle — Feature cards */}
           <div className="space-y-4">
             {features.map((feature) => (
               <div
@@ -97,20 +98,17 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
             ))}
           </div>
 
-          {/* Bottom — decorative note */}
           <div className="flex items-center gap-3 text-gray-500">
             <QrCode className="h-4 w-4 text-primary/40" />
             <span className="text-xs tracking-wide">
-              Trusted by thousands of creators worldwide
+              No credit card. No paywalls.
             </span>
           </div>
         </div>
       </div>
 
-      {/* Right panel — Clerk form */}
+      {/* Right panel: Clerk form */}
       <div className="relative flex flex-1 items-center justify-center bg-gray-950 px-4 py-12 sm:px-8">
-
-        {/* Loading skeleton — shown while Clerk loads */}
         {!loaded && (
           <div className="absolute flex w-full max-w-[400px] flex-col items-center gap-6">
             <div className="auth-skeleton-pulse h-8 w-32 rounded-lg bg-gray-800/60" />
@@ -129,7 +127,6 @@ export function AuthPageLayout({ children }: { children: React.ReactNode }) {
           </div>
         )}
 
-        {/* Clerk component */}
         <div
           ref={formRef}
           className={`relative z-10 transition-opacity duration-300 ${loaded ? "opacity-100" : "opacity-0"}`}

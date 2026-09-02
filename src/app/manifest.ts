@@ -1,15 +1,14 @@
-import { SITE_NAME } from './../lib/constants';
+import { SITE_DESCRIPTION, SITE_NAME } from "@/lib/constants";
 import type { MetadataRoute } from "next";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
     name: `${SITE_NAME} — Free QR Code Generator`,
     short_name: SITE_NAME,
-    description:
-      "Create free QR codes for URLs, Wi-Fi, vCards, and more. Customize colors and track scans with analytics.",
+    description: SITE_DESCRIPTION,
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
+    background_color: "#030712",
     theme_color: "#C45B28",
     icons: [
       { src: "/logo/icon-72.png", sizes: "72x72", type: "image/png" },

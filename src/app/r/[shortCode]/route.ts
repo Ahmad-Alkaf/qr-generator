@@ -1,5 +1,23 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { prisma } from "@/lib/prisma";
+import { anonymizeIp, getClientIp, getGeo } from "@/lib/request";
+import { SITE_NAME, SITE_URL } from "@/lib/constants";
+
+export const dynamic = "force-dynamic";
+
+/** Small self-contained page shown to people who scan a deleted or unknown code. */
+function notFoundPage(): NextResponse {
+  const html = `<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex"><title>QR code not found | ${SITE_NAME}</title>
+<style>body{margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center;font-family:system-ui,sans-serif;background:#030712;color:#e5e7eb;text-align:center;padding:24px}
+h1{font-size:1.5rem;margin:0 0 8px}p{color:#9ca3af;margin:0 0 20px}a{color:#C45B28;font-weight:600;text-decoration:none}</style></head>
+<body><div><h1>This QR code is no longer active</h1><p>The link behind it was removed or never existed.</p><a href="${SITE_URL}">Create your own QR code with ${SITE_NAME}</a></div></body></html>`;
+  return new NextResponse(html, {
+    status: 404,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
 
 export async function GET(
   req: Request,
@@ -9,51 +27,36 @@ export async function GET(
 
   const qr = await prisma.qRCode.findUnique({
     where: { shortCode },
+    select: { id: true, destinationUrl: true },
   });
 
-  if (!qr || !qr.destinationUrl) {
-    return NextResponse.redirect(new URL("/not-found", req.url), {
-      status: 302,
-    });
+  // Only allow http(s) redirects to prevent open redirects to javascript:, data:, etc.
+  const dest = qr?.destinationUrl;
+  if (!qr || !dest || !/^https?:\/\//i.test(dest)) {
+    return notFoundPage();
   }
 
-  // Log scan asynchronously — don't block the redirect
-  const headers = Object.fromEntries(new Headers(req.headers));
-  logScan(qr.id, headers, req.url).catch(console.error);
+  // Log the scan after the response is sent so the redirect is not delayed.
+  const headers = new Headers(req.headers);
+  after(() => logScan(qr.id, headers).catch(console.error));
 
-  // Only allow http(s) redirects to prevent open-redirect to javascript:, data:, etc.
-  const dest = qr.destinationUrl;
-  if (!/^https?:\/\//i.test(dest)) {
-    return NextResponse.redirect(new URL("/not-found", req.url), {
-      status: 302,
-    });
-  }
-
-  return NextResponse.redirect(dest, { status: 302 });
+  return NextResponse.redirect(dest, {
+    status: 302,
+    headers: { "Cache-Control": "no-store" },
+  });
 }
 
-async function logScan(
-  qrCodeId: string,
-  headers: Record<string, string>,
-  url: string
-) {
-  const forwarded = headers["x-forwarded-for"];
-  const ip = forwarded ? forwarded.split(",")[0].trim() : headers["x-real-ip"] || null;
-  const userAgent = headers["user-agent"] || "";
-  const referer = headers["referer"] || headers["referrer"] || null;
+async function logScan(qrCodeId: string, headers: Headers) {
+  const ip = anonymizeIp(getClientIp(headers));
+  const userAgent = headers.get("user-agent") || "";
+  const referer = headers.get("referer") || null;
+  const { country, city } = getGeo(headers);
 
-  // Parse device/os/browser from user-agent (basic parsing)
   const device = /Mobile|Android|iPhone|iPad/i.test(userAgent)
     ? "Mobile"
     : "Desktop";
   const os = parseOS(userAgent);
   const browser = parseBrowser(userAgent);
-
-  // Get geo info from Vercel headers if available
-  const country = headers["x-vercel-ip-country"] || null;
-  const city = headers["x-vercel-ip-city"]
-    ? decodeURIComponent(headers["x-vercel-ip-city"])
-    : null;
 
   await prisma.scan.create({
     data: {
@@ -71,9 +74,10 @@ async function logScan(
 
 function parseOS(ua: string): string {
   if (/Windows/i.test(ua)) return "Windows";
-  if (/Mac OS X|macOS/i.test(ua)) return "macOS";
   if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+  if (/Mac OS X|macOS/i.test(ua)) return "macOS";
   if (/Android/i.test(ua)) return "Android";
+  if (/CrOS/i.test(ua)) return "ChromeOS";
   if (/Linux/i.test(ua)) return "Linux";
   return "Unknown";
 }
@@ -85,10 +89,10 @@ function parseBrowser(ua: string): string {
   if (/Vivaldi\//i.test(ua)) return "Vivaldi";
   if (/YaBrowser\//i.test(ua)) return "Yandex";
   if (/Brave/i.test(ua)) return "Brave";
-  if (/Edg\//i.test(ua)) return "Edge";
-  if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return "Chrome";
+  if (/Edg(e|A|iOS)?\//i.test(ua)) return "Edge";
   if (/Firefox\//i.test(ua) || /FxiOS\//i.test(ua)) return "Firefox";
   if (/CriOS\//i.test(ua)) return "Chrome";
+  if (/Chrome\//i.test(ua) && !/Chromium/i.test(ua)) return "Chrome";
   if (/Safari\//i.test(ua) && !/Chrome/i.test(ua)) return "Safari";
   return "Unknown";
 }

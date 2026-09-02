@@ -7,6 +7,9 @@ export const metadata: Metadata = {
 	alternates: {canonical: '/terms'}
 };
 
+// Keep this date equal to the day the wording last changed.
+const LAST_UPDATED = 'September 2, 2026';
+
 export default function TermsPage() {
 	return (
 		<div className="py-20">
@@ -15,7 +18,7 @@ export default function TermsPage() {
 					Terms of Service
 				</h1>
 				<p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
-					Last updated: March 19, 2026
+					Last updated: {LAST_UPDATED}
 				</p>
 				<p className="mt-6 rounded-xl border border-gray-200 bg-gray-50 p-4 text-sm text-gray-600 dark:border-gray-800 dark:bg-gray-900 dark:text-gray-400">
 					{SITE_NAME} is a product of KafLabs. These terms are a
@@ -48,9 +51,10 @@ export default function TermsPage() {
 							2. Description of Service
 						</h2>
 						<p className="mt-3">
-							{SITE_NAME} provides a free QR code generation platform
-							that allows users to create, customize, and track QR
-							codes.
+							{SITE_NAME} provides a free QR code generation
+							service that allows users to create, customize, and
+							track QR codes. QR code images are generated in your
+							browser. Some features require a free account.
 						</p>
 					</section>
 
@@ -70,9 +74,7 @@ export default function TermsPage() {
 						<h2 className="text-lg font-semibold text-gray-900 dark:text-white">
 							4. Acceptable Use
 						</h2>
-						<p className="mt-3">
-							You agree not to use the Service to:
-						</p>
+						<p className="mt-3">You agree not to use the Service to:</p>
 						<ul className="mt-2 list-inside list-disc space-y-1">
 							<li>
 								Generate QR codes that link to malicious,
@@ -92,19 +94,26 @@ export default function TermsPage() {
 								controls
 							</li>
 						</ul>
+						<p className="mt-3">
+							We may disable Tracked QR codes or accounts that
+							violate these rules.
+						</p>
 					</section>
 
 					<section>
 						<h2 className="text-lg font-semibold text-gray-900 dark:text-white">
-							5. QR Code Data & Tracked QR Codes
+							5. QR Code Data &amp; Tracked QR Codes
 						</h2>
 						<p className="mt-3">
 							Direct QR codes encode content directly and do not
 							pass through our servers. Tracked QR codes redirect
 							through our servers to enable scan analytics. We
-							collect anonymized scan data (country, device type,
-							browser) for Tracked QR codes as described in our
-							Privacy Policy.
+							record scan data (truncated IP address, approximate
+							location, device type, browser, and time) for
+							Tracked QR codes as described in our Privacy Policy.
+							Tracked QR codes depend on the Service being
+							available; if the Service or your account is
+							discontinued, Tracked QR codes stop redirecting.
 						</p>
 					</section>
 
@@ -114,9 +123,11 @@ export default function TermsPage() {
 						</h2>
 						<p className="mt-3">
 							The Service is provided &quot;as is&quot; without
-							warranties of any kind. {SITE_NAME} shall not be liable
-							for any indirect, incidental, or consequential
-							damages arising from your use of the Service.
+							warranties of any kind. {SITE_NAME} shall not be
+							liable for any indirect, incidental, or
+							consequential damages arising from your use of the
+							Service, including loss caused by printed QR codes
+							that stop working.
 						</p>
 					</section>
 
@@ -125,10 +136,10 @@ export default function TermsPage() {
 							7. Modifications
 						</h2>
 						<p className="mt-3">
-							We reserve the right to modify these terms at any
-							time. We will notify users of significant changes
-							via email or through the Service. Continued use
-							after changes constitutes acceptance.
+							We may modify these terms at any time. Changes are
+							published on this page with an updated date at the
+							top. Continued use after changes constitutes
+							acceptance.
 						</p>
 					</section>
 

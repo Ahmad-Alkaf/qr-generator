@@ -133,8 +133,7 @@ export default async function DashboardPage() {
                       {scan.device || "—"} / {scan.browser || "—"}
                     </td>
                     <td className="px-4 py-3 text-gray-500 dark:text-gray-400">
-                      {scan.scannedAt.toLocaleDateString()}{" "}
-                      {scan.scannedAt.toLocaleTimeString()}
+                      {scan.scannedAt.toISOString().replace("T", " ").slice(0, 16)} UTC
                     </td>
                   </tr>
                 ))}

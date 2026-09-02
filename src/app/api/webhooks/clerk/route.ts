@@ -7,7 +7,8 @@ export async function POST(req: Request) {
   const WEBHOOK_SECRET = process.env.CLERK_WEBHOOK_SECRET;
 
   if (!WEBHOOK_SECRET) {
-    throw new Error("Missing CLERK_WEBHOOK_SECRET environment variable");
+    console.error("CLERK_WEBHOOK_SECRET is not set; webhook rejected");
+    return new Response("Webhook not configured", { status: 500 });
   }
 
   const headerPayload = await headers();
@@ -19,8 +20,8 @@ export async function POST(req: Request) {
     return new Response("Missing svix headers", { status: 400 });
   }
 
-  const payload = await req.json();
-  const body = JSON.stringify(payload);
+  // Verify the raw body. Re-serializing JSON could change the signature.
+  const body = await req.text();
 
   const wh = new Webhook(WEBHOOK_SECRET);
   let evt: WebhookEvent;
@@ -38,8 +39,18 @@ export async function POST(req: Request) {
   const eventType = evt.type;
 
   if (eventType === "user.created" || eventType === "user.updated") {
-    const { id, email_addresses, first_name, last_name, image_url } = evt.data;
-    const email = email_addresses?.[0]?.email_address;
+    const {
+      id,
+      email_addresses,
+      primary_email_address_id,
+      first_name,
+      last_name,
+      image_url,
+    } = evt.data;
+    const primary = email_addresses?.find(
+      (address) => address.id === primary_email_address_id
+    );
+    const email = primary?.email_address ?? email_addresses?.[0]?.email_address;
 
     if (!email) {
       return new Response("No email found", { status: 400 });
@@ -57,7 +68,18 @@ export async function POST(req: Request) {
   if (eventType === "user.deleted") {
     const { id } = evt.data;
     if (id) {
-      await prisma.user.deleteMany({ where: { clerkId: id } });
+      const user = await prisma.user.findUnique({
+        where: { clerkId: id },
+        select: { id: true },
+      });
+      if (user) {
+        // Remove the user's QR codes (and their scans via cascade) so no
+        // personal data outlives the account.
+        await prisma.$transaction([
+          prisma.qRCode.deleteMany({ where: { userId: user.id } }),
+          prisma.user.delete({ where: { id: user.id } }),
+        ]);
+      }
     }
   }
 

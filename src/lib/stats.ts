@@ -12,6 +12,10 @@ export interface SiteStats {
  * (or a build without DATABASE_URL) never breaks page rendering.
  */
 export async function getSiteStats(): Promise<SiteStats | null> {
+  // The Docker build has no database. Skip the query instead of logging
+  // a connection error; the page is revalidated after deploy.
+  if (process.env.NEXT_PHASE === "phase-production-build") return null;
+
   try {
     const [qrCount, userCount, scanCount] = await Promise.all([
       prisma.qRGenEvent.count(),
