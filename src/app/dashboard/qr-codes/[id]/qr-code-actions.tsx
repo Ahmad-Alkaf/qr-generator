@@ -59,7 +59,7 @@ export function QRCodeActions(props: QRCodeActionsProps) {
         cornerSquareType: props.style.cornerSquareType,
         cornerDotType: props.style.cornerDotType,
       });
-      downloadBlob(blob, `qrforge-${props.type.toLowerCase()}.${format}`);
+      downloadBlob(blob, `qr-anvil-${props.type.toLowerCase()}.${format}`);
     } catch {
       setDownloadError("Failed to render the QR code. Please try again.");
     } finally {

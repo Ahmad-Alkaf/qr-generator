@@ -1,4 +1,4 @@
-export const SITE_NAME = "QRForge";
+export const SITE_NAME = "QR Anvil";
 // Canonical origin. Tracked QR codes embed it, so set NEXT_PUBLIC_SITE_URL
 // at build time in production (see Dockerfile).
 export const SITE_URL = (

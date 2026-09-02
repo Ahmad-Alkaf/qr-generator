@@ -1,5 +1,5 @@
 import Link from "next/link";
-import Image from "next/image";
+import { Logo } from "@/components/brand/mark";
 import { SITE_NAME, KAFLABS_URL, KAFLABS_PRIVACY_URL, KAFLABS_TERMS_URL } from "@/lib/constants";
 
 const footerLinks = {
@@ -36,14 +36,8 @@ export function Footer() {
         <div className="grid grid-cols-2 gap-8 md:grid-cols-4">
           {/* Brand */}
           <div className="col-span-2 md:col-span-1">
-            <Link href="/" className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-primary">
-                <Image src="/logo/symbol.svg" alt={SITE_NAME} width={22} height={22} />
-              </div>
-              <span className="font-heading text-lg font-bold tracking-tight">
-                <span className="text-primary">QR</span>
-                <span className="text-gray-900 dark:text-white">Forge</span>
-              </span>
+            <Link href="/" aria-label={`${SITE_NAME} home`} className="inline-flex">
+              <Logo size="sm" />
             </Link>
             <p className="mt-4 text-sm text-gray-500 dark:text-gray-400">
               Create, customize, and track QR codes. Free for everyone.

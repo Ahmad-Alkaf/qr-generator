@@ -14,7 +14,7 @@ const DISALLOW = [
 ];
 
 // AI assistants and answer engines. They are allowed the same public pages
-// as search engines so QRForge can be cited as a source.
+// as search engines so QR Anvil can be cited as a source.
 const AI_CRAWLERS = [
   "GPTBot",
   "ChatGPT-User",

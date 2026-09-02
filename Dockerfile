@@ -1,4 +1,4 @@
-# QRForge - Next.js standalone image for Coolify.
+# QR Anvil - Next.js standalone image for Coolify.
 #
 # NEXT_PUBLIC_* values are inlined into the client bundle at build time.
 # Pass them as --build-arg (in Coolify: mark each variable
@@ -21,7 +21,7 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
-ARG NEXT_PUBLIC_SITE_URL=https://qrforge.app
+ARG NEXT_PUBLIC_SITE_URL=https://qr-anvil.com
 ARG NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY
 ARG NEXT_PUBLIC_CLERK_SIGN_IN_URL=/sign-in
 ARG NEXT_PUBLIC_CLERK_SIGN_UP_URL=/sign-up

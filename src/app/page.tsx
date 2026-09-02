@@ -130,7 +130,7 @@ const comparison = [
 	{
 		feature: 'Where the content lives',
 		direct: 'Inside the QR image',
-		tracked: 'On a short QRForge redirect link'
+		tracked: 'On a short QR Anvil redirect link'
 	},
 	{
 		feature: 'Scan speed',
@@ -162,7 +162,7 @@ const comparison = [
 const faqs = [
 	{
 		q: 'What is the difference between Direct and Tracked QR codes?',
-		a: 'Direct QR codes store your content in the image itself, so scanning opens it instantly with no redirect. Tracked QR codes store a short QRForge redirect link. The redirect lets QRForge count scans, record location, device, and time, and lets you change the destination URL after the code is printed.'
+		a: 'Direct QR codes store your content in the image itself, so scanning opens it instantly with no redirect. Tracked QR codes store a short QR Anvil redirect link. The redirect lets QR Anvil count scans, record location, device, and time, and lets you change the destination URL after the code is printed.'
 	},
 	{
 		q: `Is ${SITE_NAME} really free?`,
@@ -182,7 +182,7 @@ const faqs = [
 	},
 	{
 		q: 'How do scan analytics work?',
-		a: 'When someone scans a Tracked QR code, the phone opens a short QRForge link that redirects to your destination. QRForge records the scan with country, city, device type, operating system, browser, and timestamp, and shows the results in your dashboard. Direct QR codes do not have analytics because they do not redirect.'
+		a: 'When someone scans a Tracked QR code, the phone opens a short QR Anvil link that redirects to your destination. QR Anvil records the scan with country, city, device type, operating system, browser, and timestamp, and shows the results in your dashboard. Direct QR codes do not have analytics because they do not redirect.'
 	},
 	{
 		q: 'Which download formats are available?',
@@ -290,7 +290,7 @@ export default async function HomePage() {
 				</section>
 			)}
 
-			{/* What is QRForge (entity definition for search and AI answers) */}
+			{/* What is QR Anvil (entity definition for search and AI answers) */}
 			<section
 				aria-labelledby="what-is-heading"
 				className="py-16">

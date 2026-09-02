@@ -5,7 +5,7 @@ import type { QRTypeFaq } from "@/lib/qr-type-content";
  * Structured data (schema.org JSON-LD) and shared SEO facts.
  *
  * Search engines use these objects for rich results. AI assistants use them
- * to identify what QRForge is, who makes it, and what each page is about.
+ * to identify what QR Anvil is, who makes it, and what each page is about.
  */
 
 /** Date the public copy last changed. Update it when the wording changes. */

@@ -13,11 +13,11 @@ import { FEATURE_LIST, SITE_SUMMARY, SITE_TAGLINE } from "@/lib/seo";
 const HOME_FAQS = [
   {
     q: "What is the difference between Direct and Tracked QR codes?",
-    a: "Direct QR codes store the content in the image itself, so scanning opens it instantly with no redirect. Tracked QR codes store a short QRForge redirect link. The redirect lets QRForge count scans, record country, city, device, browser, and time, and lets the owner change the destination URL after the code is printed.",
+    a: "Direct QR codes store the content in the image itself, so scanning opens it instantly with no redirect. Tracked QR codes store a short QR Anvil redirect link. The redirect lets QR Anvil count scans, record country, city, device, browser, and time, and lets the owner change the destination URL after the code is printed.",
   },
   {
-    q: "Is QRForge free?",
-    a: "Yes. QRForge is free to use with no watermark. URL QR codes and PNG downloads work without an account. A free account unlocks all 8 QR types, SVG and PDF downloads, Tracked QR codes, and the analytics dashboard.",
+    q: "Is QR Anvil free?",
+    a: "Yes. QR Anvil is free to use with no watermark. URL QR codes and PNG downloads work without an account. A free account unlocks all 8 QR types, SVG and PDF downloads, Tracked QR codes, and the analytics dashboard.",
   },
   {
     q: "Which download formats are available?",
@@ -83,7 +83,7 @@ export function buildLlmsFullTxt(): string {
     `Maker: KafLabs (${KAFLABS_URL})`,
     `Support: ${SUPPORT_EMAIL}`,
     "",
-    heading(2, "How QRForge works"),
+    heading(2, "How QR Anvil works"),
     "",
     "1. Choose a QR code type: URL, Wi-Fi, vCard, Email, SMS, WhatsApp, PDF, or Plain Text.",
     "2. Enter the content. Choose Direct mode (content stored in the image) or Tracked mode (short redirect link with scan analytics and an editable destination).",

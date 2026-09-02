@@ -181,7 +181,7 @@ export function QRGenerator({ defaultType = "URL", compact = false }: QRGenerato
         cornerSquareType,
         cornerDotType,
       });
-      downloadBlob(blob, `qrforge-${type.toLowerCase()}.${format}`);
+      downloadBlob(blob, `qr-anvil-${type.toLowerCase()}.${format}`);
     } catch {
       setError("Failed to generate the QR code. Please try again.");
     } finally {

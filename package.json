@@ -1,5 +1,5 @@
 {
-  "name": "qrforge",
+  "name": "qr-anvil",
   "version": "0.1.0",
   "private": true,
   "scripts": {
@@ -11,7 +11,8 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
-    "db:studio": "prisma studio"
+    "db:studio": "prisma studio",
+    "icons": "node scripts/icons.mjs"
   },
   "dependencies": {
     "@clerk/nextjs": "^7.0.5",

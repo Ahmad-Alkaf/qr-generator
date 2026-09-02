@@ -20,7 +20,7 @@ import { breadcrumbJsonLd, jsonLdGraph, webPageJsonLd } from "@/lib/seo";
 
 const TITLE = "QR Code Types — URL, Wi-Fi, vCard, Email, SMS, WhatsApp, PDF, Text";
 const DESCRIPTION =
-  "Compare the 8 QR code types you can create for free with QRForge. Learn what each type does, when to use it, and whether it works offline.";
+  "Compare the 8 QR code types you can create for free with QR Anvil. Learn what each type does, when to use it, and whether it works offline.";
 
 export const metadata: Metadata = {
   title: TITLE,

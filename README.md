@@ -1,4 +1,4 @@
-# QRForge
+# QR Anvil
 
 Free QR code generator with scan analytics. A [KafLabs](https://kaflabs.com) product.
 
@@ -34,7 +34,7 @@ See `.env.example`. `NEXT_PUBLIC_*` values are inlined into the client bundle at
 
 | Variable | When | Note |
 |---|---|---|
-| `NEXT_PUBLIC_SITE_URL` | build | Canonical origin, for example `https://qrforge.app`. Tracked QR codes embed it forever. |
+| `NEXT_PUBLIC_SITE_URL` | build | Canonical origin, for example `https://qr-anvil.com`. Tracked QR codes embed it forever. |
 | `NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY` | build | Clerk production instance |
 | `NEXT_PUBLIC_CLERK_SIGN_IN_URL` etc. | build | `/sign-in`, `/sign-up`, `/dashboard`, `/dashboard` |
 | `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` | build | Optional. Google Search Console HTML-tag verification token. Leave empty to skip the meta tag. |
@@ -50,7 +50,7 @@ The repository ships a multi-stage `Dockerfile` that builds a Next.js standalone
 1. **Database.** Create a PostgreSQL resource in Coolify (or use a managed provider). Copy its connection string.
 2. **Application.** New resource, source = this repository, build pack = **Dockerfile**, port **3000**.
 3. **Environment variables.** Add every row from the table above. For each `NEXT_PUBLIC_*` variable tick **"Available at build time"** (Coolify passes them as `--build-arg`). Runtime variables need no build flag.
-4. **Domain.** Set the domain to the canonical host you put in `NEXT_PUBLIC_SITE_URL`. Let Coolify issue the certificate. Redirect the other host (apex or www) with a 301.
+4. **Domain.** The canonical host is the apex `https://qr-anvil.com` (no www). Set it as the Coolify domain and in `NEXT_PUBLIC_SITE_URL`. Let Coolify issue the certificate. Redirect `www.qr-anvil.com` to the apex with a 301.
 5. **Health check.** Path `/api/health`, port 3000. It returns 200 only when the database answers.
 6. **Clerk.** In the Clerk dashboard create the production instance, add the domain, and register the webhook `https://<domain>/api/webhooks/clerk`. Paste its signing secret into `CLERK_WEBHOOK_SECRET`.
 7. **Deploy.** Watch the logs: the first lines show the migrations being applied.

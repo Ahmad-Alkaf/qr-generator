@@ -28,7 +28,7 @@ export type QRTypePage = {
   content: string;
   /** Concrete situations where this type is the right choice. */
   useCases: string[];
-  /** Ordered steps to create this type of QR code on QRForge. */
+  /** Ordered steps to create this type of QR code on QR Anvil. */
   steps: string[];
   faqs: QRTypeFaq[];
 };
@@ -52,7 +52,7 @@ export const QR_TYPE_PAGES: Record<string, QRTypePage> = {
     definition:
       "A URL QR code is a QR code that opens a web address when it is scanned with a phone camera.",
     content:
-      "URL QR codes are the most popular type of QR code. Paste any web address and QRForge creates a scannable QR code that opens the link when scanned. Choose Direct mode for instant access with no redirect, or Tracked mode to count scans, see where and on which devices they happen, and change the destination after the code is printed.",
+      "URL QR codes are the most popular type of QR code. Paste any web address and QR Anvil creates a scannable QR code that opens the link when scanned. Choose Direct mode for instant access with no redirect, or Tracked mode to count scans, see where and on which devices they happen, and change the destination after the code is printed.",
     useCases: [
       "Posters, flyers, and business cards that link to a website",
       "Product packaging that opens a product page or manual",
@@ -71,11 +71,11 @@ export const QR_TYPE_PAGES: Record<string, QRTypePage> = {
       },
       {
         q: "What is the difference between Direct and Tracked URL QR codes?",
-        a: "A Direct QR code encodes the URL itself, so scanning opens the link instantly with no redirect. A Tracked QR code encodes a short QRForge redirect link, which lets QRForge count scans, record location and device data, and lets you change the destination URL later without reprinting.",
+        a: "A Direct QR code encodes the URL itself, so scanning opens the link instantly with no redirect. A Tracked QR code encodes a short QR Anvil redirect link, which lets QR Anvil count scans, record location and device data, and lets you change the destination URL later without reprinting.",
       },
       {
         q: "Do URL QR codes expire?",
-        a: "Direct URL QR codes never expire because the address is stored in the image itself. Tracked QR codes keep working as long as the code exists in your QRForge dashboard.",
+        a: "Direct URL QR codes never expire because the address is stored in the image itself. Tracked QR codes keep working as long as the code exists in your QR Anvil dashboard.",
       },
     ],
   },
@@ -112,7 +112,7 @@ export const QR_TYPE_PAGES: Record<string, QRTypePage> = {
     faqs: [
       {
         q: "Is it safe to share my Wi-Fi password with a QR code?",
-        a: "The password is stored in the QR code image itself and never sent to QRForge. Only people who can scan the physical QR code get access. For extra safety, create a separate guest network and make a QR code for that network.",
+        a: "The password is stored in the QR code image itself and never sent to QR Anvil. Only people who can scan the physical QR code get access. For extra safety, create a separate guest network and make a QR code for that network.",
       },
       {
         q: "Does a Wi-Fi QR code work on both iPhone and Android?",
@@ -306,7 +306,7 @@ export const QR_TYPE_PAGES: Record<string, QRTypePage> = {
     definition:
       "A PDF QR code is a QR code that opens a PDF document hosted online when it is scanned.",
     content:
-      "PDF QR codes link to a PDF document hosted online. When scanned, the PDF opens in the phone's browser or PDF viewer. Upload the PDF to any hosting service, paste the link, and QRForge creates the code. PDF QR codes are common for restaurant menus, event programs, product manuals, and digital brochures. Use Tracked mode to count how many people open the document and to swap the file later without reprinting.",
+      "PDF QR codes link to a PDF document hosted online. When scanned, the PDF opens in the phone's browser or PDF viewer. Upload the PDF to any hosting service, paste the link, and QR Anvil creates the code. PDF QR codes are common for restaurant menus, event programs, product manuals, and digital brochures. Use Tracked mode to count how many people open the document and to swap the file later without reprinting.",
     useCases: [
       "Contactless restaurant and café menus",
       "Product manuals and safety data sheets on packaging",

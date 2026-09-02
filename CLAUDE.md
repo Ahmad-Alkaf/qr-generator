@@ -2,7 +2,7 @@ Shared organization rules, product list, and shell rules are in the parent `../C
 
 ## Architecture
 
-**QRForge** — a free QR code generator built with Next.js 16, React 19, Tailwind CSS 4, Clerk auth, and Prisma (PostgreSQL via `@prisma/adapter-pg`).
+**QR Anvil** — a free QR code generator built with Next.js 16, React 19, Tailwind CSS 4, Clerk auth, and Prisma (PostgreSQL via `@prisma/adapter-pg`).
 
 ### Key flows
 
@@ -17,6 +17,12 @@ Shared organization rules, product list, and shell rules are in the parent `../C
 - Host: **Coolify** with the repository `Dockerfile` (Next.js `output: "standalone"`). The entrypoint runs `prisma migrate deploy` and then `node server.js`. Health check: `/api/health`.
 - `NEXT_PUBLIC_*` variables must be marked "Available at build time" in Coolify. See `README.md` for the full table.
 - Package manager is **npm** (`package-lock.json`). Do not add pnpm or yarn lock files.
+
+### Brand
+
+- Product name is **QR Anvil** (two words in copy; `qr-anvil` in file names and the domain `qr-anvil.com`, apex only, no www). The repository folder is still `qrforge/`.
+- The mark ("Cleft Corner") lives in `src/lib/brand.ts` as `MARK_PATH`. `src/components/brand/mark.tsx` renders it (`Mark`, `Logo`). `npm run icons` regenerates `public/logo/*`, both `favicon.ico` files, and `../kaflabs/qr-anvil-icon.png` from that path. Never hand-edit the PNGs.
+- Header tagline is `BRAND_TAGLINE` in `src/lib/brand.ts`. The SEO tagline is separate (`SITE_TAGLINE` in `src/lib/seo.ts`).
 
 ### Auth & users
 

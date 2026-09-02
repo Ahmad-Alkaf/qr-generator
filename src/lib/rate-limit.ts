@@ -15,7 +15,7 @@ function getRatelimit() {
     redis: new Redis({ url, token }),
     limiter: Ratelimit.slidingWindow(20, "60 s"),
     analytics: true,
-    prefix: "qrforge",
+    prefix: "qr-anvil",
   });
 
   return ratelimit;
