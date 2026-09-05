@@ -18,6 +18,10 @@ Shared organization rules, product list, and shell rules are in the parent `../C
 - `NEXT_PUBLIC_*` variables must be marked "Available at build time" in Coolify. See `README.md` for the full table.
 - Package manager is **npm** (`package-lock.json`). Do not add pnpm or yarn lock files.
 
+### Tests
+
+`npm test` runs Vitest on `__tests__/` (QR data builder, request helpers, short codes). Add a test when you change `src/lib/qr.ts` or `src/lib/request.ts`.
+
 ### Brand
 
 - Product name is **QR Anvil** (two words in copy; `qr-anvil` in file names and the domain `qr-anvil.com`, apex only, no www). The repository folder is `qranvil/` (renamed from `qrforge/` on 2026-09-02).
